@@ -19,22 +19,14 @@ interface FilterConfigProps {
 }
 
 const sportTypeOptions = [
-  { value: 'Ride', label: '🚴 Cycling' },
-  { value: 'Run', label: '🏃 Running' },
-  { value: 'VirtualRide', label: '🎮 Virtual Ride' },
-  { value: 'VirtualRun', label: '🎮 Virtual Run' },
-  { value: 'Swim', label: '🏊 Swimming' },
-  { value: 'Walk', label: '🚶 Walking' },
-  { value: 'Hike', label: '🥾 Hiking' },
+  { value: 'Ride', label: '🚴 Ride' },
+  { value: 'Run', label: '🏃 Run' }
 ];
 
 const rideTypeOptions = [
+  { value: 'Road', label: '🛣️ Ride' },
   { value: 'Race', label: '🏁 Race' },
-  { value: 'Workout', label: '💪 Workout' },
-  { value: 'Commute', label: '🏢 Commute' },
-  { value: 'Gravel', label: '🪨 Gravel' },
-  { value: 'MountainBike', label: '⛰️ Mountain Bike' },
-  { value: 'Road', label: '🛣️ Road' },
+  { value: 'Workout', label: '💪 Workout' }
 ];
 
 const privacyOptions = [
@@ -78,7 +70,7 @@ export function FilterConfig({ scenario, onSubmit, onExecute, onPrevious, initia
   };
 
   const updateDateRange = (id: string, dates: [dayjs.Dayjs | null, dayjs.Dayjs | null] | null) => {
-    setDateRanges(dateRanges.map(r => 
+    setDateRanges(dateRanges.map(r =>
       r.id === id ? { ...r, start: dates?.[0]?.toDate() || null, end: dates?.[1]?.toDate() || null } : r
     ));
   };
@@ -117,8 +109,8 @@ export function FilterConfig({ scenario, onSubmit, onExecute, onPrevious, initia
   };
 
   const getLockedSportType = () => {
-    if (scenario === 'bikes' || scenario === 'ride_type') return '🚴 Cycling';
-    if (scenario === 'shoes') return '🏃 Running';
+    if (scenario === 'bikes' || scenario === 'ride_type') return '🚴 Ride';
+    if (scenario === 'shoes') return '🏃 Run';
     return null;
   };
 
@@ -129,15 +121,15 @@ export function FilterConfig({ scenario, onSubmit, onExecute, onPrevious, initia
           {/* Sport Type */}
           {getLockedSportType() ? (
             <div>
-              <Text strong>Sport Type: </Text>
+              <Text strong>Sport: </Text>
               <Tag color="blue">{getLockedSportType()} (Locked)</Tag>
             </div>
           ) : (
             <div>
-              <Text strong>Sport Type</Text>
+              <Text strong>Sport</Text>
               <Select
                 mode="multiple"
-                placeholder="Select sport type"
+                placeholder="Select sport"
                 options={sportTypeOptions}
                 value={selectedSportTypes}
                 onChange={setSelectedSportTypes}
@@ -150,8 +142,8 @@ export function FilterConfig({ scenario, onSubmit, onExecute, onPrevious, initia
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
               <Text strong>Date Range</Text>
-              <Button 
-                type="link" 
+              <Button
+                type="link"
                 size="small"
                 icon={<PlusOutlined />}
                 onClick={addDateRange}
@@ -171,7 +163,7 @@ export function FilterConfig({ scenario, onSubmit, onExecute, onPrevious, initia
                     style={{ flex: 1 }}
                   />
                   {dateRanges.length > 1 && (
-                    <Button 
+                    <Button
                       type="text"
                       danger
                       size="small"
@@ -288,8 +280,8 @@ export function FilterConfig({ scenario, onSubmit, onExecute, onPrevious, initia
       <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
         <Button onClick={onPrevious}>Previous</Button>
         <Space>
-          <Button 
-            color="cyan" 
+          <Button
+            color="cyan"
             variant="solid"
             onClick={() => {
               const filters: FilterConfigType = {
@@ -314,7 +306,7 @@ export function FilterConfig({ scenario, onSubmit, onExecute, onPrevious, initia
           >
             Execute Now
           </Button>
-          <Button 
+          <Button
             type="primary"
             onClick={handleSubmit}
             disabled={

@@ -33,7 +33,7 @@ export function PreviewResults({ scenario, onStartExecution }: PreviewResultsPro
       setScanned(prev => {
         const next = prev + 1;
         setProgress((next / totalActivities) * 100);
-        
+
         if (next >= totalActivities) {
           clearInterval(interval);
           setTimeout(() => {
@@ -41,7 +41,7 @@ export function PreviewResults({ scenario, onStartExecution }: PreviewResultsPro
             setLoading(false);
           }, 300);
         }
-        
+
         return next;
       });
     }, 50);
@@ -103,7 +103,7 @@ export function PreviewResults({ scenario, onStartExecution }: PreviewResultsPro
       <div>
         <Text strong>Matched </Text>
         <Tag color="orange">{matchedActivities.length}</Tag>
-        <Text strong> activities</Text>
+        <Text strong>activities</Text>
       </div>
       <Table
         dataSource={matchedActivities}

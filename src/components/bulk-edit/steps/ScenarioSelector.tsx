@@ -21,28 +21,28 @@ const scenarios: { id: ScenarioType; icon: React.ReactNode; title: string; descr
     icon: <EnvironmentOutlined style={{ fontSize: 24 }} />,
     title: '👟 Bulk Update Shoes',
     description: 'Batch assign or change shoes for running activities',
-    badge: 'Running Only',
+    badge: 'Run Only',
   },
   {
     id: 'bikes',
     icon: <CarOutlined style={{ fontSize: 24 }} />,
     title: '🚴 Bulk Update Bikes',
-    description: 'Batch assign or change bikes for cycling activities',
-    badge: 'Cycling Only',
+    description: 'Batch assign or change bikes for riding activities',
+    badge: 'Ride Only',
   },
   {
     id: 'ride_type',
     icon: <TagsOutlined style={{ fontSize: 24 }} />,
     title: '🏷️ Tag Ride Type',
-    description: 'Batch set ride type (Commute, Workout, Race, etc.)',
-    badge: 'Cycling Only',
+    description: 'Batch set ride type (Ride, Race, Workout)',
+    badge: 'Ride Only',
   },
 ];
 
 export function ScenarioSelector({ selectedScenario, onSelect }: ScenarioSelectorProps) {
   return (
     <Space direction="vertical" size="middle" style={{ width: '100%' }}>
-      
+
       {scenarios.map((scenario) => (
         <Card
           key={scenario.id}
