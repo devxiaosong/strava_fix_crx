@@ -1,0 +1,22 @@
+.popup-container {
+  width: 350px;
+  min-height: 200px;
+  padding: 20px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+}
+
+.content {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.content p {
+  color: #666;
+  font-size: 14px;
+  margin: 0;
+}
+

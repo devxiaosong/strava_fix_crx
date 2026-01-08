@@ -1,0 +1,36 @@
+{
+  "name": "strava-fix-crx",
+  "displayName": "Strava Bulk Edit Extension",
+  "version": "0.0.1",
+  "description": "Bulk edit Strava activities - Update ride type, bike, shoes, and privacy settings for multiple activities at once",
+  "author": "",
+  "scripts": {
+    "dev": "plasmo dev",
+    "build": "plasmo build",
+    "package": "plasmo package"
+  },
+  "dependencies": {
+    "antd": "^5.23.6",
+    "@ant-design/icons": "^5.5.3",
+    "dayjs": "^1.11.19",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "uuid": "^11.1.0"
+  },
+  "devDependencies": {
+    "@plasmohq/prettier-plugin-sort-imports": "^4.0.0",
+    "@types/chrome": "^0.0.258",
+    "@types/node": "^22.16.5",
+    "@types/react": "^18.3.23",
+    "@types/react-dom": "^18.3.7",
+    "@types/uuid": "^11.0.0",
+    "plasmo": "^0.85.2",
+    "prettier": "^3.2.4",
+    "typescript": "^5.8.3"
+  },
+  "manifest": {
+    "host_permissions": ["https://www.strava.com/*"],
+    "permissions": ["activeTab", "storage"]
+  }
+}
+

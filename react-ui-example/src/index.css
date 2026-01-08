@@ -1,0 +1,153 @@
+@import '@mantine/core/styles.css';
+@import '@mantine/dates/styles.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Strava Bulk Edit Design System
+   Primary: Deep Indigo/Slate - Professional tool aesthetic
+   Accent: Strava Orange (#FC4C02) - Core actions, progress, highlights
+   All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    /* Deep Indigo/Slate as primary - professional tool aesthetic */
+    --background: 220 14% 96%;
+    --foreground: 224 71% 4%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 224 71% 4%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 224 71% 4%;
+
+    /* Deep Indigo primary */
+    --primary: 226 71% 28%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 224 71% 4%;
+
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 9% 46%;
+
+    /* Strava Orange accent */
+    --accent: 18 98% 50%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 226 71% 28%;
+
+    --radius: 0.5rem;
+
+    /* Strava-specific colors */
+    --strava-orange: 18 98% 50%;
+    --strava-orange-hover: 18 98% 45%;
+    --slate-dark: 224 71% 4%;
+    --slate-medium: 220 9% 46%;
+    --slate-light: 220 14% 96%;
+  }
+
+  .dark {
+    --background: 224 71% 4%;
+    --foreground: 210 40% 98%;
+
+    --card: 224 71% 8%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 224 71% 8%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 226 71% 50%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 224 71% 12%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 224 71% 12%;
+    --muted-foreground: 220 9% 65%;
+
+    --accent: 18 98% 50%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 62% 30%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 224 71% 15%;
+    --input: 224 71% 15%;
+    --ring: 226 71% 50%;
+
+    --strava-orange: 18 98% 50%;
+    --strava-orange-hover: 18 98% 55%;
+    --slate-dark: 210 40% 98%;
+    --slate-medium: 220 9% 65%;
+    --slate-light: 224 71% 12%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+}
+
+/* Custom animations for Bulk Edit modal */
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in-horizontal {
+  from {
+    opacity: 0;
+    transform: translateX(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.3s ease-out;
+}
+
+.animate-fade-horizontal {
+  animation: fade-in-horizontal 0.25s ease-out;
+}
+
+/* Modal backdrop blur */
+.modal-backdrop {
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+}
+
+/* Strava-style pill button */
+.btn-pill {
+  @apply rounded-full px-6 py-2 font-medium transition-all duration-200;
+}
+
+.btn-strava {
+  background-color: hsl(var(--strava-orange));
+  color: white;
+}
+
+.btn-strava:hover {
+  background-color: hsl(var(--strava-orange-hover));
+}
