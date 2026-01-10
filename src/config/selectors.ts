@@ -415,3 +415,113 @@ export const validateSelectorGroup = (selectorGroup: Record<string, string>): {
   return results
 }
 
+/**
+ * XPath 选择器配置
+ * 用于更精确的 DOM 查询
+ */
+export const XPATH_SELECTORS = {
+  /**
+   * 活动行容器
+   */
+  ACTIVITY_ROW: "//div[contains(@class, 'training-activity-row')]",
+  
+  /**
+   * 快速编辑按钮
+   */
+  QUICK_EDIT_BUTTON: "//div[contains(@class, 'training-activity-row')]//button[contains(@class, 'quick-edit')]",
+  
+  /**
+   * 骑行类型下拉框
+   */
+  RIDE_TYPE_SELECT: "//div[contains(@class, 'training-activity-row')]//select[@name='workout_type_ride']",
+  
+  /**
+   * 自行车下拉框
+   */
+  BIKE_SELECT: "//div[contains(@class, 'training-activity-row')]//select[@name='bike_id']",
+  
+  /**
+   * 跑鞋/装备下拉框
+   */
+  SHOES_SELECT: "//div[contains(@class, 'training-activity-row')]//select[@name='athlete_gear_id']",
+  
+  /**
+   * 隐私设置下拉框
+   */
+  VISIBILITY_SELECT: "//div[contains(@class, 'training-activity-row')]//select[@name='visibility']",
+  
+  /**
+   * 提交按钮
+   */
+  SUBMIT_BUTTON: "//div[contains(@class, 'training-activity-row')]//button[@type='submit']",
+  
+  /**
+   * 下一页按钮
+   */
+  NEXT_PAGE_BUTTON: "//button[contains(@class, 'next_page')]",
+  
+  /**
+   * 上一页按钮
+   */
+  PREV_PAGE_BUTTON: "//button[contains(@class, 'previous_page')]",
+} as const
+
+/**
+ * XPath 查询工具函数：查询单个元素
+ * 
+ * @param xpath - XPath 表达式
+ * @param contextNode - 上下文节点，默认为 document
+ * @returns 找到的第一个元素，如果没有则返回 null
+ */
+export const queryByXPath = <T extends Node = Element>(
+  xpath: string,
+  contextNode: Node = document
+): T | null => {
+  try {
+    const result = document.evaluate(
+      xpath,
+      contextNode,
+      null,
+      XPathResult.FIRST_ORDERED_NODE_TYPE,
+      null
+    )
+    return result.singleNodeValue as T | null
+  } catch (error) {
+    console.error(`[XPath] Query failed: ${xpath}`, error)
+    return null
+  }
+}
+
+/**
+ * XPath 查询工具函数：查询所有匹配的元素
+ * 
+ * @param xpath - XPath 表达式
+ * @param contextNode - 上下文节点，默认为 document
+ * @returns 所有匹配的元素数组
+ */
+export const queryAllByXPath = <T extends Node = Element>(
+  xpath: string,
+  contextNode: Node = document
+): T[] => {
+  try {
+    const result = document.evaluate(
+      xpath,
+      contextNode,
+      null,
+      XPathResult.ORDERED_NODE_SNAPSHOT_TYPE,
+      null
+    )
+    const nodes: T[] = []
+    for (let i = 0; i < result.snapshotLength; i++) {
+      const node = result.snapshotItem(i)
+      if (node) {
+        nodes.push(node as T)
+      }
+    }
+    return nodes
+  } catch (error) {
+    console.error(`[XPath] Query all failed: ${xpath}`, error)
+    return []
+  }
+}
+

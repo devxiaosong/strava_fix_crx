@@ -45,7 +45,7 @@ export function formatDateTime(date: Date | number | string): string {
 }
 
 /**
- * 格式化相对时间（如：2小时前、3天前）
+ * 格式化相对时间（如：2 hours ago, 3 days ago）
  * @param timestamp 时间戳
  * @returns 相对时间字符串
  */
@@ -58,10 +58,10 @@ export function formatRelativeTime(timestamp: number): string {
   const hours = Math.floor(minutes / 60);
   const days = Math.floor(hours / 24);
 
-  if (days > 0) return `${days}天前`;
-  if (hours > 0) return `${hours}小时前`;
-  if (minutes > 0) return `${minutes}分钟前`;
-  return `${seconds}秒前`;
+  if (days > 0) return `${days} day${days > 1 ? 's' : ''} ago`;
+  if (hours > 0) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+  if (minutes > 0) return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
+  return `${seconds} second${seconds !== 1 ? 's' : ''} ago`;
 }
 
 /**
@@ -146,78 +146,36 @@ export function formatSpeed(speedInMps: number): string {
 }
 
 /**
- * 格式化运动类型为中文
+ * 格式化运动类型（直接返回英文）
  * @param sportType 运动类型
- * @returns 中文名称
+ * @returns 运动类型名称
  */
 export function formatSportType(sportType: SportType): string {
-  const sportTypeMap: Record<SportType, string> = {
-    'Ride': '骑行',
-    'Run': '跑步',
-    'Swim': '游泳',
-    'Hike': '徒步',
-    'Walk': '步行',
-    'AlpineSki': '高山滑雪',
-    'BackcountrySki': '野外滑雪',
-    'Canoeing': '独木舟',
-    'Crossfit': '综合健身',
-    'EBikeRide': '电动自行车',
-    'Elliptical': '椭圆机',
-    'Golf': '高尔夫',
-    'Handcycle': '手摇自行车',
-    'IceSkate': '滑冰',
-    'InlineSkate': '轮滑',
-    'Kayaking': '皮划艇',
-    'Kitesurf': '风筝冲浪',
-    'NordicSki': '越野滑雪',
-    'RockClimbing': '攀岩',
-    'RollerSki': '滚轴滑雪',
-    'Rowing': '划船',
-    'Snowboard': '滑雪板',
-    'Snowshoe': '雪鞋',
-    'Soccer': '足球',
-    'StairStepper': '踏步机',
-    'StandUpPaddling': '站立式划桨',
-    'Surfing': '冲浪',
-    'VirtualRide': '虚拟骑行',
-    'VirtualRun': '虚拟跑步',
-    'WeightTraining': '力量训练',
-    'Wheelchair': '轮椅',
-    'Windsurf': '帆板',
-    'Workout': '健身',
-    'Yoga': '瑜伽',
-  };
-
-  return sportTypeMap[sportType] || sportType;
+  // 直接返回英文，不做翻译
+  return sportType;
 }
 
 /**
- * 格式化骑行类型为中文
+ * 格式化骑行类型（直接返回英文）
  * @param rideType 骑行类型
- * @returns 中文名称
+ * @returns 骑行类型名称
  */
 export function formatRideType(rideType: RideType | null | undefined): string {
-  if (!rideType) return '无';
-
-  const rideTypeMap: Record<RideType, string> = {
-    'ride': '骑行',
-    'commute': '通勤',
-    'workout': '训练',
-  };
-
-  return rideTypeMap[rideType] || rideType;
+  if (!rideType) return 'None';
+  // 直接返回英文，不做翻译
+  return rideType;
 }
 
 /**
- * 格式化隐私级别为中文
+ * 格式化隐私级别（直接返回英文）
  * @param privacy 隐私级别
- * @returns 中文名称
+ * @returns 隐私级别名称
  */
 export function formatPrivacyLevel(privacy: PrivacyLevel): string {
   const privacyMap: Record<PrivacyLevel, string> = {
-    'everyone': '所有人可见',
-    'followers': '仅关注者可见',
-    'only_me': '仅自己可见',
+    'everyone': 'Everyone',
+    'followers_only': 'Followers Only',
+    'only_me': 'Only Me',
   };
 
   return privacyMap[privacy] || privacy;
@@ -262,10 +220,10 @@ export function formatFileSize(bytes: number): string {
 /**
  * 格式化预计剩余时间
  * @param seconds 秒数
- * @returns 格式化后的时间字符串（如：还剩 2分30秒）
+ * @returns 格式化后的时间字符串（如：2m 30s remaining）
  */
 export function formatEstimatedTime(seconds: number): string {
-  if (seconds <= 0) return '即将完成';
+  if (seconds <= 0) return 'Almost done';
 
   const minutes = Math.floor(seconds / 60);
   const remainingSeconds = seconds % 60;
@@ -273,14 +231,14 @@ export function formatEstimatedTime(seconds: number): string {
   if (minutes > 60) {
     const hours = Math.floor(minutes / 60);
     const remainingMinutes = minutes % 60;
-    return `还剩 ${hours}小时${remainingMinutes}分钟`;
+    return `${hours}h ${remainingMinutes}m remaining`;
   }
 
   if (minutes > 0) {
-    return `还剩 ${minutes}分${remainingSeconds}秒`;
+    return `${minutes}m ${remainingSeconds}s remaining`;
   }
 
-  return `还剩 ${remainingSeconds}秒`;
+  return `${remainingSeconds}s remaining`;
 }
 
 /**
@@ -315,22 +273,22 @@ export function formatFilterDescription(filters: any): string {
   const parts: string[] = [];
 
   if (filters.sportType) {
-    parts.push(`运动类型: ${formatSportType(filters.sportType)}`);
+    parts.push(`Sport: ${formatSportType(filters.sportType)}`);
   }
 
   if (filters.dateRange) {
-    parts.push(`日期: ${formatDate(filters.dateRange.start)} 至 ${formatDate(filters.dateRange.end)}`);
+    parts.push(`Date: ${formatDate(filters.dateRange.start)} to ${formatDate(filters.dateRange.end)}`);
   }
 
   if (filters.distanceRange) {
-    parts.push(`距离: ${filters.distanceRange.min}-${filters.distanceRange.max} km`);
+    parts.push(`Distance: ${filters.distanceRange.min}-${filters.distanceRange.max} km`);
   }
 
   if (filters.rideType) {
-    parts.push(`骑行类型: ${formatRideType(filters.rideType)}`);
+    parts.push(`Ride Type: ${formatRideType(filters.rideType)}`);
   }
 
-  return parts.length > 0 ? parts.join(', ') : '无筛选条件';
+  return parts.length > 0 ? parts.join(', ') : 'No filters';
 }
 
 /**
@@ -342,22 +300,22 @@ export function formatUpdateDescription(updates: any): string[] {
   const descriptions: string[] = [];
 
   if (updates.bikeId !== undefined) {
-    descriptions.push(`更新自行车`);
+    descriptions.push(`Update bike`);
   }
 
   if (updates.shoesId !== undefined) {
-    descriptions.push(`更新跑鞋`);
+    descriptions.push(`Update shoes`);
   }
 
   if (updates.visibility !== undefined) {
-    descriptions.push(`更新隐私设置为: ${formatPrivacyLevel(updates.visibility)}`);
+    descriptions.push(`Update visibility to: ${formatPrivacyLevel(updates.visibility)}`);
   }
 
   if (updates.workoutType !== undefined) {
-    descriptions.push(`更新骑行类型为: ${formatRideType(updates.workoutType)}`);
+    descriptions.push(`Update ride type to: ${formatRideType(updates.workoutType)}`);
   }
 
-  return descriptions.length > 0 ? descriptions : ['无更新操作'];
+  return descriptions.length > 0 ? descriptions : ['No updates'];
 }
 
 /**
@@ -378,6 +336,6 @@ export function formatErrorMessage(error: any): string {
     return error.message;
   }
 
-  return '发生未知错误';
+  return 'Unknown error occurred';
 }
 
