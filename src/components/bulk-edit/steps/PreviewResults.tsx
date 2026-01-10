@@ -56,13 +56,13 @@ export function PreviewResults({ scenario, filters, updates, onStartExecution }:
           setTotalPages(result.totalPages);
           setLoading(false);
         } else {
-          setError(result.error || '预览扫描失败');
+          setError(result.error || 'Preview scan failed');
           setLoading(false);
         }
       } catch (err) {
         if (!isMounted) return;
         console.error('[PreviewResults] Preview failed:', err);
-        setError((err as Error).message || '预览扫描失败');
+        setError((err as Error).message || 'Preview scan failed');
         setLoading(false);
       }
     };
@@ -77,22 +77,22 @@ export function PreviewResults({ scenario, filters, updates, onStartExecution }:
   if (loading) {
     return (
       <Space direction="vertical" size="large" style={{ width: '100%' }} align="center">
-        <Title level={4}>扫描并匹配活动中...</Title>
+        <Title level={4}>Scanning and matching activities...</Title>
         <Card style={{ width: '100%' }}>
           <Space direction="vertical" size="middle" style={{ width: '100%' }}>
             <Progress percent={typeof progress === 'number' ? Math.round(progress) : 0} status="active" />
             <Space size="large" style={{ width: '100%', justifyContent: 'center' }}>
               <div style={{ textAlign: 'center' }}>
                 <Title level={2} style={{ color: '#1890ff', margin: 0 }}>{scanned}</Title>
-                <Text type="secondary">已扫描</Text>
+                <Text type="secondary">Scanned</Text>
               </div>
               <div style={{ textAlign: 'center' }}>
                 <Title level={2} style={{ color: '#52c41a', margin: 0 }}>{matchedActivities.length}</Title>
-                <Text type="secondary">已匹配</Text>
+                <Text type="secondary">Matched</Text>
               </div>
               <div style={{ textAlign: 'center' }}>
                 <Title level={2} style={{ margin: 0 }}>{totalPages}</Title>
-                <Text type="secondary">页数</Text>
+                <Text type="secondary">Pages</Text>
               </div>
             </Space>
           </Space>
@@ -105,18 +105,18 @@ export function PreviewResults({ scenario, filters, updates, onStartExecution }:
     return (
       <Space direction="vertical" size="middle" style={{ width: '100%' }}>
         <Alert
-          message="预览失败"
+          message="Preview Failed"
           description={error}
           type="error"
           showIcon
         />
         <div>
-          <Text>已扫描 {scanned} 个活动，匹配 {matchedActivities.length} 个</Text>
+          <Text>Scanned {scanned} activities, matched {matchedActivities.length}</Text>
         </div>
         {matchedActivities.length > 0 && (
           <div style={{ textAlign: 'right' }}>
             <Button type="primary" onClick={onStartExecution}>
-              继续执行（基于已匹配的活动）
+              Continue (with matched activities)
             </Button>
           </div>
         )}
@@ -153,9 +153,9 @@ export function PreviewResults({ scenario, filters, updates, onStartExecution }:
   return (
     <Space direction="vertical" size="middle" style={{ width: '100%' }}>
       <div>
-        <Text strong>匹配到 </Text>
+        <Text strong>Matched </Text>
         <Tag color="orange">{matchedActivities.length}</Tag>
-        <Text strong>个活动（共扫描 {scanned} 个，{totalPages} 页）</Text>
+        <Text strong> activities (scanned {scanned}, {totalPages} pages)</Text>
       </div>
       <Table
         dataSource={matchedActivities}
@@ -171,7 +171,7 @@ export function PreviewResults({ scenario, filters, updates, onStartExecution }:
           onClick={onStartExecution}
           disabled={matchedActivities.length === 0}
         >
-          开始执行更新
+          Start Execution
         </Button>
       </div>
     </Space>

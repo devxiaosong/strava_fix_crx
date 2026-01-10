@@ -199,9 +199,9 @@ export async function runPreview(config: PreviewConfig): Promise<PreviewResult> 
         console.error(`[PreviewEngine] Error scanning page ${currentPage}:`, error);
 
         if (stopOnError || consecutiveErrors >= 3) {
-          hasError = true;
-          errorMessage = `扫描失败: ${(error as Error).message}`;
-          shouldContinue = false;
+        hasError = true;
+        errorMessage = `Scan failed: ${(error as Error).message}`;
+        shouldContinue = false;
           break;
         }
 
@@ -249,7 +249,7 @@ export async function runPreview(config: PreviewConfig): Promise<PreviewResult> 
     // 停止监听
     stopListening();
 
-    errorMessage = `预览失败: ${(error as Error).message}`;
+    errorMessage = `Preview failed: ${(error as Error).message}`;
 
     // 报告错误
     if (onProgress) {
@@ -310,7 +310,7 @@ export async function runQuickPreview(
   if (pageCount >= maxPages) {
     return {
       ...result,
-      error: result.error || `仅扫描了前 ${maxPages} 页（快速预览）`,
+      error: result.error || `Scanned first ${maxPages} pages only (quick preview)`,
     };
   }
 

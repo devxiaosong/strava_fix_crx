@@ -472,9 +472,9 @@ export async function runExecution(config: ExecutionConfig): Promise<ExecutionRe
         console.error(`[ExecuteEngine] Error processing page ${currentPage}:`, error);
 
         if (!continueOnError || consecutiveErrors >= 3) {
-          hasError = true;
-          errorMessage = `执行失败: ${(error as Error).message}`;
-          shouldContinue = false;
+        hasError = true;
+        errorMessage = `Execution failed: ${(error as Error).message}`;
+        shouldContinue = false;
           break;
         }
 
@@ -529,7 +529,7 @@ export async function runExecution(config: ExecutionConfig): Promise<ExecutionRe
 
     stopListening();
 
-    errorMessage = `执行失败: ${(error as Error).message}`;
+    errorMessage = `Execution failed: ${(error as Error).message}`;
 
     await completeTask(errorMessage);
 

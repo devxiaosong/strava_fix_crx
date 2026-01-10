@@ -417,16 +417,16 @@ export function validatePageEnvironment(): { ready: boolean; errors: string[] } 
   const errors: string[] = [];
 
   if (!isOnTrainingLogPage()) {
-    errors.push('不在训练日志页面');
+    errors.push('Not on training log page');
   }
 
   if (!isPageLoaded()) {
-    errors.push('页面未加载完成');
+    errors.push('Page not loaded');
   }
 
   const activityRows = getActivityRowElements();
   if (activityRows.length === 0) {
-    errors.push('页面上没有找到活动列表');
+    errors.push('No activity list found on page');
   }
 
   return {
@@ -454,14 +454,14 @@ export async function preparePageForExecution(): Promise<{ success: boolean; err
   // 2. 确保回到第一页
   const firstPageSuccess = await ensureFirstPage();
   if (!firstPageSuccess) {
-    errors.push('无法回到第一页');
+    errors.push('Unable to return to first page');
     return { success: false, errors };
   }
 
   // 3. 确保列表按时间排序
   const sortSuccess = await ensureTimeSortedList();
   if (!sortSuccess) {
-    errors.push('无法按时间排序列表');
+    errors.push('Unable to sort list by time');
     return { success: false, errors };
   }
 

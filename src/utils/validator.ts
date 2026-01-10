@@ -298,27 +298,27 @@ export function validateExecutionPrerequisites(checks: {
   const errors: string[] = [];
 
   if (checks.athleteId !== undefined && !isValidAthleteId(checks.athleteId)) {
-    errors.push('无效的运动员ID');
+    errors.push('Invalid athlete ID');
   }
 
   if (checks.filterConfig !== undefined && !isValidFilterConfig(checks.filterConfig)) {
-    errors.push('无效的筛选配置');
+    errors.push('Invalid filter configuration');
   }
 
   if (checks.updateConfig !== undefined && !isValidUpdateConfig(checks.updateConfig)) {
-    errors.push('无效的更新配置');
+    errors.push('Invalid update configuration');
   }
 
   if (checks.rule !== undefined && !isValidRule(checks.rule)) {
-    errors.push('无效的规则配置');
+    errors.push('Invalid rule configuration');
   }
 
   if (checks.onTrainingLogPage !== undefined && !checks.onTrainingLogPage) {
-    errors.push('不在训练日志页面');
+    errors.push('Not on training log page');
   }
 
   if (checks.pageLoaded !== undefined && !checks.pageLoaded) {
-    errors.push('页面未加载完成');
+    errors.push('Page not loaded');
   }
 
   return {

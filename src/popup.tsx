@@ -7,9 +7,9 @@ function IndexPopup() {
   const [count, setCount] = useState(0)
 
   return (
-    <div className="popup-container">s
+    <div className="popup-container">
       <div className="content">
-        <p>欢迎使用 Plasmo + Antd 构建的 Chrome 插件！</p>
+        <p>Welcome to Strava Bulk Edit Extension!</p>
       </div>
     </div>
   )

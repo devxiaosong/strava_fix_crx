@@ -78,12 +78,12 @@ export function ExecutionProgress({ scenario, filters, updates, onComplete }: Ex
         if (result.success || result.successfulUpdates > 0) {
           onComplete();
         } else {
-          setError(result.error || '执行失败');
+          setError(result.error || 'Execution failed');
         }
       } catch (err) {
         if (!isMounted) return;
         console.error('[ExecutionProgress] Execution failed:', err);
-        setError((err as Error).message || '执行失败');
+        setError((err as Error).message || 'Execution failed');
       }
     };
 
@@ -96,11 +96,9 @@ export function ExecutionProgress({ scenario, filters, updates, onComplete }: Ex
 
   const handlePauseResume = () => {
     if (isPaused) {
-      // 恢复执行
       resumeExecution({ filters, updates });
       setIsPaused(false);
     } else {
-      // 暂停执行
       pauseExecution();
       setIsPaused(true);
     }
@@ -109,16 +107,16 @@ export function ExecutionProgress({ scenario, filters, updates, onComplete }: Ex
   return (
     <Space direction="vertical" size="large" style={{ width: '100%' }} align="center">
       <Title level={4}>
-        {status === 'preparing' && '准备执行中...'}
-        {status === 'executing' && '批量更新执行中...'}
-        {status === 'paused' && '执行已暂停'}
-        {status === 'completed' && '执行完成'}
-        {status === 'error' && '执行出错'}
+        {status === 'preparing' && 'Preparing...'}
+        {status === 'executing' && 'Executing Bulk Update...'}
+        {status === 'paused' && 'Execution Paused'}
+        {status === 'completed' && 'Execution Complete'}
+        {status === 'error' && 'Execution Error'}
       </Title>
       
       {error && (
         <Alert
-          message="执行过程中发生错误"
+          message="Error During Execution"
           description={error}
           type="warning"
           showIcon
@@ -137,25 +135,25 @@ export function ExecutionProgress({ scenario, filters, updates, onComplete }: Ex
           <Space size="large" style={{ width: '100%', justifyContent: 'space-around' }}>
             <div style={{ textAlign: 'center' }}>
               <Title level={2} style={{ color: '#1890ff', margin: 0 }}>{processedCount}</Title>
-              <Text type="secondary">已处理</Text>
+              <Text type="secondary">Processed</Text>
             </div>
             <div style={{ textAlign: 'center' }}>
               <Title level={2} style={{ color: '#52c41a', margin: 0 }}>{successCount}</Title>
-              <Text type="secondary">成功</Text>
+              <Text type="secondary">Success</Text>
             </div>
             <div style={{ textAlign: 'center' }}>
               <Title level={2} style={{ color: '#faad14', margin: 0 }}>{skippedCount}</Title>
-              <Text type="secondary">跳过</Text>
+              <Text type="secondary">Skipped</Text>
             </div>
             <div style={{ textAlign: 'center' }}>
               <Title level={2} style={{ color: '#f5222d', margin: 0 }}>{failedCount}</Title>
-              <Text type="secondary">失败</Text>
+              <Text type="secondary">Failed</Text>
             </div>
           </Space>
 
           <Space size="middle" style={{ width: '100%', justifyContent: 'center' }}>
             <Text type="secondary">
-              页面: {currentPage} / {totalPages || '?'}
+              Page: {currentPage} / {totalPages || '?'}
             </Text>
             {estimatedTime > 0 && (
               <Text type="secondary">
@@ -170,7 +168,7 @@ export function ExecutionProgress({ scenario, filters, updates, onComplete }: Ex
             block
             disabled={status === 'completed' || status === 'error'}
           >
-            {isPaused ? '继续执行' : '暂停'}
+            {isPaused ? 'Resume' : 'Pause'}
           </Button>
         </Space>
       </Card>

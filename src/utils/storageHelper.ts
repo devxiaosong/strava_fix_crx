@@ -19,7 +19,7 @@ export async function saveTaskData(taskData: TaskData): Promise<void> {
     console.log('[StorageHelper] Task data saved successfully', taskData);
   } catch (error) {
     console.error('[StorageHelper] Failed to save task data:', error);
-    throw new Error('保存任务数据失败');
+    throw new Error('Failed to save task data');
   }
 }
 
@@ -65,7 +65,7 @@ export async function clearTaskData(): Promise<void> {
     console.log('[StorageHelper] Task data cleared');
   } catch (error) {
     console.error('[StorageHelper] Failed to clear task data:', error);
-    throw new Error('清除任务数据失败');
+    throw new Error('Failed to clear task data');
   }
 }
 
@@ -90,7 +90,7 @@ export async function updateTaskProgress(progressUpdate: Partial<TaskData['progr
     console.log('[StorageHelper] Task progress updated', progressUpdate);
   } catch (error) {
     console.error('[StorageHelper] Failed to update task progress:', error);
-    throw new Error('更新任务进度失败');
+    throw new Error('Failed to update task progress');
   }
 }
 
@@ -130,7 +130,7 @@ export async function updateTaskStatus(
     console.log('[StorageHelper] Task status updated to', status);
   } catch (error) {
     console.error('[StorageHelper] Failed to update task status:', error);
-    throw new Error('更新任务状态失败');
+    throw new Error('Failed to update task status');
   }
 }
 
@@ -147,7 +147,7 @@ export async function saveAthleteId(athleteId: string): Promise<void> {
     console.log('[StorageHelper] Athlete ID saved:', athleteId);
   } catch (error) {
     console.error('[StorageHelper] Failed to save athlete ID:', error);
-    throw new Error('保存运动员ID失败');
+    throw new Error('Failed to save athlete ID');
   }
 }
 
@@ -236,7 +236,7 @@ export async function clearAllStorage(): Promise<void> {
     console.log('[StorageHelper] All storage cleared');
   } catch (error) {
     console.error('[StorageHelper] Failed to clear storage:', error);
-    throw new Error('清除存储失败');
+    throw new Error('Failed to clear storage');
   }
 }
 
