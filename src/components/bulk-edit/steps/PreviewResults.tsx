@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Space, Typography, Table, Tag, Progress, Card, Button, Alert } from 'antd';
 import type { ScenarioType, FilterConfig, UpdateConfig, Activity } from '~/types/activity';
-import { formatDate, formatDistance, getSportIcon } from '~/data/mockData';
+import { formatDate, formatDistance, getSportIcon } from '~/utils/formatHelper';
 import { runPreview } from '~/engine/previewEngine';
 import type { PreviewProgress } from '~/engine/previewEngine';
 

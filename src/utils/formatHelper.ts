@@ -156,6 +156,44 @@ export function formatSportType(sportType: SportType): string {
 }
 
 /**
+ * 获取运动类型对应的图标
+ * @param sportType 运动类型
+ * @returns emoji 图标
+ */
+export function getSportIcon(sportType: string): string {
+  const icons: Record<string, string> = {
+    'Ride': '🚴',
+    'Run': '🏃',
+    'VirtualRide': '🎮',
+    'VirtualRun': '🎮',
+    'Swim': '🏊',
+    'Walk': '🚶',
+    'Hike': '🥾',
+    'AlpineSki': '⛷️',
+    'BackcountrySki': '🎿',
+    'Canoeing': '🛶',
+    'Crossfit': '🏋️',
+    'EBikeRide': '🚴‍♂️',
+    'Elliptical': '🏃‍♂️',
+    'Golf': '⛳',
+    'IceSkate': '⛸️',
+    'InlineSkate': '⛸️',
+    'Kayaking': '🚣',
+    'Kitesurf': '🪁',
+    'NordicSki': '⛷️',
+    'RockClimbing': '🧗',
+    'Rowing': '🚣',
+    'Snowboard': '🏂',
+    'Soccer': '⚽',
+    'Surfing': '🏄',
+    'WeightTraining': '🏋️',
+    'Workout': '💪',
+    'Yoga': '🧘',
+  };
+  return icons[sportType] || '🏃';
+}
+
+/**
  * 格式化骑行类型（直接返回英文）
  * @param rideType 骑行类型
  * @returns 骑行类型名称
