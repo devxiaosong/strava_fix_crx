@@ -1,9 +1,5 @@
 import type { BulkEditFields, UpdateStatus } from "~types/strava"
-
-/**
- * 延迟函数
- */
-const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+import { CURRENT_DELAYS, delay } from "~config/delays"
 
 /**
  * 更新当前页面的所有活动
@@ -22,7 +18,7 @@ const updateCurrentPageActivities = async (fields: BulkEditFields): Promise<numb
   quickEditButtons.forEach((button) => button.click())
 
   // 等待编辑表单出现
-  await delay(500)
+  await delay(CURRENT_DELAYS.QUICK_EDIT_CLICK)
 
   // 2. 填充骑行类型
   if (fields.rideType) {
@@ -65,7 +61,7 @@ const updateCurrentPageActivities = async (fields: BulkEditFields): Promise<numb
   }
 
   // 等待一下让表单更新
-  await delay(300)
+  await delay(CURRENT_DELAYS.FORM_FILL)
 
   // 6. 提交所有修改
   const submitButtons = document.querySelectorAll<HTMLButtonElement>(
@@ -74,7 +70,7 @@ const updateCurrentPageActivities = async (fields: BulkEditFields): Promise<numb
   submitButtons.forEach((button) => button.click())
 
   // 等待提交完成
-  await delay(1500)
+  await delay(CURRENT_DELAYS.SUBMIT_SAVE)
 
   return quickEditButtons.length
 }
@@ -100,7 +96,7 @@ const goToNextPage = async (): Promise<boolean> => {
   nextButton.click()
   
   // 等待页面加载
-  await delay(2000)
+  await delay(CURRENT_DELAYS.PAGE_LOAD)
   
   return true
 }
@@ -117,7 +113,7 @@ const goBackToFirstPage = async (): Promise<void> => {
     }
 
     prevButton.click()
-    await delay(1500)
+    await delay(CURRENT_DELAYS.PAGE_LOAD)
   }
 }
 

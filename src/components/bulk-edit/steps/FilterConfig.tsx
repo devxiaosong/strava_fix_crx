@@ -1,8 +1,8 @@
-import { useState } from 'react';
-import { Space, Typography, Card, Select, DatePicker, InputNumber, Button, Checkbox, Divider, Tag, Slider } from 'antd';
+import { useState, useEffect } from 'react';
+import { Space, Typography, Card, Select, DatePicker, InputNumber, Button, Checkbox, Divider, Tag, Slider, Spin, Alert } from 'antd';
 import { PlusOutlined, DeleteOutlined } from '@ant-design/icons';
-import type { ScenarioType, FilterConfig as FilterConfigType, UpdateConfig, DateRange, SportType, RideType, PrivacyLevel } from '~/types/activity';
-import { mockBikes, mockShoes } from '~/data/mockData';
+import type { ScenarioType, FilterConfig as FilterConfigType, UpdateConfig, DateRange, SportType, RideType, PrivacyLevel, GearItem } from '~/types/activity';
+import { fetchBikes, fetchShoes } from '~/services/stravaApi';
 import { v4 as uuidv4 } from 'uuid';
 import dayjs from 'dayjs';
 
@@ -59,6 +59,41 @@ export function FilterConfig({ scenario, onSubmit, onExecute, onPrevious, initia
   );
   const [updatePrivacyToo, setUpdatePrivacyToo] = useState(false);
 
+  // Gear loading state
+  const [bikes, setBikes] = useState<GearItem[]>([]);
+  const [shoes, setShoes] = useState<GearItem[]>([]);
+  const [gearLoading, setGearLoading] = useState(false);
+  const [gearError, setGearError] = useState<string | null>(null);
+
+  // Load gear data when component mounts or scenario changes
+  useEffect(() => {
+    const loadGearData = async () => {
+      if (scenario !== 'bikes' && scenario !== 'shoes') {
+        return;
+      }
+
+      setGearLoading(true);
+      setGearError(null);
+
+      try {
+        if (scenario === 'bikes') {
+          const bikesData = await fetchBikes();
+          setBikes(bikesData);
+        } else if (scenario === 'shoes') {
+          const shoesData = await fetchShoes();
+          setShoes(shoesData);
+        }
+      } catch (error) {
+        console.error('Error loading gear:', error);
+        setGearError(error instanceof Error ? error.message : 'Failed to load gear data');
+      } finally {
+        setGearLoading(false);
+      }
+    };
+
+    loadGearData();
+  }, [scenario]);
+
   const addDateRange = () => {
     setDateRanges([...dateRanges, { id: uuidv4(), start: null, end: null }]);
   };
@@ -79,14 +114,16 @@ export function FilterConfig({ scenario, onSubmit, onExecute, onPrevious, initia
 
   const getGearOptions = () => {
     if (scenario === 'bikes') {
-      return mockBikes
-        .filter(b => !b.retired)
-        .map(b => ({ value: b.id, label: `${b.name} (${b.distance.toFixed(0)} mi)` }));
+      return bikes.map(b => ({
+        value: b.id,
+        label: `${b.name} (${(b.distance / 1609.34).toFixed(0)} mi)` // Convert meters to miles
+      }));
     }
     if (scenario === 'shoes') {
-      return mockShoes
-        .filter(s => !s.retired)
-        .map(s => ({ value: s.id, label: `${s.name} (${s.distance.toFixed(0)} mi)` }));
+      return shoes.map(s => ({
+        value: s.id,
+        label: `${s.name} (${(s.distance / 1609.34).toFixed(0)} mi)` // Convert meters to miles
+      }));
     }
     return [];
   };
@@ -122,7 +159,7 @@ export function FilterConfig({ scenario, onSubmit, onExecute, onPrevious, initia
           {getLockedSportType() ? (
             <div>
               <Text strong>Sport: </Text>
-              <Tag color="blue">{getLockedSportType()} (Locked)</Tag>
+              <Tag color="blue">{getLockedSportType()}</Tag>
             </div>
           ) : (
             <div>
@@ -216,12 +253,35 @@ export function FilterConfig({ scenario, onSubmit, onExecute, onPrevious, initia
           {(scenario === 'bikes' || scenario === 'shoes') && (
             <div>
               <Text strong>{scenario === 'bikes' ? 'Select Bike' : 'Select Shoes'} *</Text>
+
+              {gearError && (
+                <Alert
+                  message="Failed to load gear"
+                  description={gearError}
+                  type="error"
+                  closable
+                  style={{ marginTop: 8 }}
+                  onClose={() => setGearError(null)}
+                />
+              )}
+
               <Select
-                placeholder={scenario === 'bikes' ? 'Please select a bike to assign' : 'Please select shoes to assign'}
+                placeholder={
+                  gearLoading
+                    ? 'Loading...'
+                    : scenario === 'bikes'
+                      ? 'Please select a bike to assign'
+                      : 'Please select shoes to assign'
+                }
                 options={getGearOptions()}
                 value={selectedGear}
                 onChange={setSelectedGear}
+                loading={gearLoading}
+                disabled={gearLoading || !!gearError}
                 style={{ width: '100%', marginTop: 8 }}
+                notFoundContent={
+                  gearLoading ? <Spin size="small" /> : 'No gear found'
+                }
               />
             </div>
           )}

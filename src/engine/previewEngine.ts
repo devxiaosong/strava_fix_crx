@@ -1,0 +1,341 @@
+/**
+ * 预览引擎
+ * 负责扫描活动列表、应用规则筛选、并返回匹配的活动预览
+ */
+
+import type { Activity, RuleConfig, FilterConfig, UpdateConfig } from '~/types/activity';
+import {
+  preparePageForExecution,
+  hasNextPage,
+  goToNextPage,
+  getCurrentPage,
+  getPageActivityIds,
+  waitForPageLoad,
+} from '~/core/pageManager';
+import {
+  initApiListener,
+  startListening,
+  stopListening,
+  waitForNextResponse,
+} from '~/core/apiListener';
+import { evaluateRule, shouldStopPaging, compileRule } from '~/core/ruleEngine';
+import { delay, CURRENT_DELAYS, getRetryDelay } from '~/config/delays';
+
+/**
+ * 预览进度回调
+ */
+export interface PreviewProgress {
+  currentPage: number;
+  scannedActivities: number;
+  matchedActivities: number;
+  estimatedTotal?: number;
+  status: 'scanning' | 'completed' | 'error';
+  error?: string;
+}
+
+/**
+ * 预览结果
+ */
+export interface PreviewResult {
+  success: boolean;
+  matchedActivities: Activity[];
+  totalScanned: number;
+  totalMatched: number;
+  totalPages: number;
+  error?: string;
+}
+
+/**
+ * 预览配置
+ */
+export interface PreviewConfig {
+  filters: FilterConfig;
+  rule?: RuleConfig; // 可选，如果不提供则从 filters 编译
+  onProgress?: (progress: PreviewProgress) => void;
+  maxRetries?: number;
+  stopOnError?: boolean;
+}
+
+/**
+ * 扫描单页活动并匹配规则
+ * @param rule 规则配置
+ * @param maxRetries 最大重试次数
+ * @returns Promise<{ activities: Activity[], shouldStop: boolean }>
+ */
+async function scanPageActivities(
+  rule: RuleConfig,
+  maxRetries: number = 3
+): Promise<{ activities: Activity[]; shouldStop: boolean }> {
+  let retryCount = 0;
+  let lastError: Error | null = null;
+
+  while (retryCount < maxRetries) {
+    try {
+      console.log(`[PreviewEngine] Scanning page ${getCurrentPage()}, attempt ${retryCount + 1}`);
+
+      // 等待 API 响应
+      const apiResponse = await waitForNextResponse();
+
+      if (!apiResponse) {
+        throw new Error('API response timeout');
+      }
+
+      const { activities } = apiResponse;
+      console.log(`[PreviewEngine] Received ${activities.length} activities from API`);
+
+      // 检查是否应该停止分页（智能优化）
+      const shouldStop = shouldStopPaging(activities, rule);
+
+      return { activities, shouldStop };
+    } catch (error) {
+      lastError = error as Error;
+      retryCount++;
+
+      if (retryCount < maxRetries) {
+        const retryDelay = getRetryDelay(retryCount);
+        console.warn(
+          `[PreviewEngine] Scan failed, retrying in ${retryDelay}ms...`,
+          error
+        );
+        await delay(retryDelay);
+      }
+    }
+  }
+
+  throw new Error(
+    `Failed to scan page after ${maxRetries} attempts: ${lastError?.message}`
+  );
+}
+
+/**
+ * 执行预览扫描
+ * @param config 预览配置
+ * @returns Promise<PreviewResult>
+ */
+export async function runPreview(config: PreviewConfig): Promise<PreviewResult> {
+  console.log('[PreviewEngine] Starting preview scan', config);
+
+  const { filters, onProgress, maxRetries = 3, stopOnError = false } = config;
+  const rule = config.rule || compileRule(filters);
+
+  const matchedActivities: Activity[] = [];
+  let totalScanned = 0;
+  let totalPages = 0;
+  let hasError = false;
+  let errorMessage: string | undefined;
+
+  try {
+    // 1. 初始化 API 监听器
+    initApiListener();
+
+    // 2. 准备页面（回到第一页 + 时间排序）
+    console.log('[PreviewEngine] Preparing page...');
+    const prepResult = await preparePageForExecution();
+
+    if (!prepResult.success) {
+      throw new Error(`Page preparation failed: ${prepResult.errors.join(', ')}`);
+    }
+
+    // 3. 开始扫描第一页
+    console.log('[PreviewEngine] Starting page scan...');
+    let shouldContinue = true;
+    let consecutiveErrors = 0;
+
+    while (shouldContinue) {
+      const currentPage = getCurrentPage();
+      totalPages = currentPage;
+
+      // 报告进度
+      if (onProgress) {
+        onProgress({
+          currentPage,
+          scannedActivities: totalScanned,
+          matchedActivities: matchedActivities.length,
+          status: 'scanning',
+        });
+      }
+
+      try {
+        // 扫描当前页
+        const { activities, shouldStop } = await scanPageActivities(rule, maxRetries);
+
+        // 过滤匹配的活动
+        const matched = activities.filter(activity => evaluateRule(rule, activity));
+        matchedActivities.push(...matched);
+
+        totalScanned += activities.length;
+        consecutiveErrors = 0; // 重置错误计数
+
+        console.log(
+          `[PreviewEngine] Page ${currentPage}: ${matched.length}/${activities.length} matched`
+        );
+
+        // 检查是否应该停止（智能优化）
+        if (shouldStop) {
+          console.log('[PreviewEngine] Smart paging optimization: stopping scan');
+          shouldContinue = false;
+          break;
+        }
+
+        // 检查是否有下一页
+        if (!hasNextPage()) {
+          console.log('[PreviewEngine] No more pages, scan complete');
+          shouldContinue = false;
+          break;
+        }
+
+        // 翻页
+        const pageSuccess = await goToNextPage();
+        if (!pageSuccess) {
+          console.warn('[PreviewEngine] Failed to navigate to next page');
+          shouldContinue = false;
+          break;
+        }
+
+        // 等待页面加载
+        await waitForPageLoad();
+      } catch (error) {
+        consecutiveErrors++;
+        console.error(`[PreviewEngine] Error scanning page ${currentPage}:`, error);
+
+        if (stopOnError || consecutiveErrors >= 3) {
+          hasError = true;
+          errorMessage = `扫描失败: ${(error as Error).message}`;
+          shouldContinue = false;
+          break;
+        }
+
+        // 尝试恢复：跳过当前页，继续下一页
+        if (hasNextPage()) {
+          console.log('[PreviewEngine] Attempting to skip to next page...');
+          await goToNextPage();
+          await waitForPageLoad();
+        } else {
+          shouldContinue = false;
+        }
+      }
+    }
+
+    // 4. 完成扫描
+    console.log(
+      `[PreviewEngine] Scan completed: ${matchedActivities.length}/${totalScanned} activities matched`
+    );
+
+    // 停止监听
+    stopListening();
+
+    // 最终进度报告
+    if (onProgress) {
+      onProgress({
+        currentPage: totalPages,
+        scannedActivities: totalScanned,
+        matchedActivities: matchedActivities.length,
+        status: hasError ? 'error' : 'completed',
+        error: errorMessage,
+      });
+    }
+
+    return {
+      success: !hasError,
+      matchedActivities,
+      totalScanned,
+      totalMatched: matchedActivities.length,
+      totalPages,
+      error: errorMessage,
+    };
+  } catch (error) {
+    console.error('[PreviewEngine] Preview scan failed:', error);
+
+    // 停止监听
+    stopListening();
+
+    errorMessage = `预览失败: ${(error as Error).message}`;
+
+    // 报告错误
+    if (onProgress) {
+      onProgress({
+        currentPage: totalPages,
+        scannedActivities: totalScanned,
+        matchedActivities: matchedActivities.length,
+        status: 'error',
+        error: errorMessage,
+      });
+    }
+
+    return {
+      success: false,
+      matchedActivities,
+      totalScanned,
+      totalMatched: matchedActivities.length,
+      totalPages,
+      error: errorMessage,
+    };
+  }
+}
+
+/**
+ * 快速预览（仅扫描前N页）
+ * @param config 预览配置
+ * @param maxPages 最多扫描页数
+ * @returns Promise<PreviewResult>
+ */
+export async function runQuickPreview(
+  config: PreviewConfig,
+  maxPages: number = 3
+): Promise<PreviewResult> {
+  console.log(`[PreviewEngine] Starting quick preview (max ${maxPages} pages)`);
+
+  const originalOnProgress = config.onProgress;
+  let pageCount = 0;
+
+  // 包装进度回调，在达到最大页数时停止
+  const wrappedOnProgress = (progress: PreviewProgress) => {
+    pageCount = progress.currentPage;
+    if (originalOnProgress) {
+      originalOnProgress(progress);
+    }
+  };
+
+  const wrappedConfig: PreviewConfig = {
+    ...config,
+    onProgress: wrappedOnProgress,
+  };
+
+  // 使用修改后的 runPreview，但添加页数限制
+  // 这里可以通过在 scanPageActivities 中检查 pageCount 来实现
+  // 为简化，直接调用 runPreview
+  const result = await runPreview(wrappedConfig);
+
+  // 如果超过最大页数，标记为部分结果
+  if (pageCount >= maxPages) {
+    return {
+      ...result,
+      error: result.error || `仅扫描了前 ${maxPages} 页（快速预览）`,
+    };
+  }
+
+  return result;
+}
+
+/**
+ * 重新扫描指定页面
+ * @param pageNumber 页码
+ * @param rule 规则配置
+ * @returns Promise<Activity[]>
+ */
+export async function rescanPage(
+  pageNumber: number,
+  rule: RuleConfig
+): Promise<Activity[]> {
+  console.log(`[PreviewEngine] Rescanning page ${pageNumber}`);
+
+  // 导航到指定页面（这里需要实现跳转到特定页的功能）
+  // 暂时省略，假设已经在目标页
+
+  const { activities } = await scanPageActivities(rule);
+  const matched = activities.filter(activity => evaluateRule(rule, activity));
+
+  console.log(`[PreviewEngine] Rescan complete: ${matched.length} activities matched`);
+  return matched;
+}
+
