@@ -97,8 +97,41 @@ export interface BulkEditTask {
 // ==================== 规则引擎类型 ====================
 
 /**
- * Condition (条件) 类型
+ * 条件类型枚举
+ */
+export type ConditionType = 
+  | 'sportType' 
+  | 'dateRange' 
+  | 'distanceRange' 
+  | 'rideType';
+
+/**
+ * ConditionConfig (条件配置) 类型
  * 单个筛选条件，如运动类型、时间范围、距离范围等
+ */
+export interface ConditionConfig {
+  /** 条件类型 */
+  type: ConditionType;
+  
+  /** 条件是否启用 */
+  enabled: boolean;
+  
+  /** 条件值（根据类型不同而不同） */
+  value: any;
+}
+
+/**
+ * RuleConfig (规则配置) 类型
+ * 由多个条件组成的规则
+ */
+export interface RuleConfig {
+  /** 条件列表 */
+  conditions: ConditionConfig[];
+}
+
+/**
+ * Condition (条件) 类型 - 已废弃，使用 ConditionConfig 代替
+ * @deprecated Use ConditionConfig instead
  */
 export interface Condition {
   /** 条件类型 */
