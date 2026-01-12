@@ -67,7 +67,7 @@ export async function waitForElement(
  * @returns 当前页码，默认为1
  */
 export function getCurrentPage(): number {
-  const currentPageElement = findElement(SELECTORS.CURRENT_PAGE_INDICATOR);
+  const currentPageElement = findElement(SELECTORS.STATE.CURRENT_PAGE);
   
   if (!currentPageElement) {
     console.warn('[PageManager] Cannot find current page indicator, assuming page 1');
@@ -86,7 +86,7 @@ export function getCurrentPage(): number {
  */
 export function getTotalPages(): number | null {
   // 尝试从分页元素中提取总页数
-  const lastPageButton = findElement(SELECTORS.LAST_PAGE_BUTTON);
+  const lastPageButton = findElement(SELECTORS.BUTTON.LAST_PAGE);
   
   if (!lastPageButton) {
     console.warn('[PageManager] Cannot find last page button');
@@ -104,7 +104,7 @@ export function getTotalPages(): number | null {
  * @returns boolean
  */
 export function hasNextPage(): boolean {
-  const nextButton = findElement<HTMLButtonElement>(SELECTORS.NEXT_PAGE_BUTTON);
+  const nextButton = findElement<HTMLButtonElement>(SELECTORS.BUTTON.NEXT_PAGE);
   
   if (!nextButton) {
     console.log('[PageManager] No next page button found');
@@ -123,7 +123,7 @@ export async function goToNextPage(): Promise<boolean> {
   console.log('[PageManager] Attempting to go to next page');
 
   const currentPage = getCurrentPage();
-  const nextButton = findElement<HTMLButtonElement>(SELECTORS.NEXT_PAGE_BUTTON);
+  const nextButton = findElement<HTMLButtonElement>(SELECTORS.BUTTON.NEXT_PAGE);
 
   if (!nextButton) {
     console.warn('[PageManager] Next page button not found');
@@ -181,7 +181,7 @@ export async function goToFirstPage(): Promise<boolean> {
     return true;
   }
 
-  const firstPageButton = findElement<HTMLButtonElement>(SELECTORS.FIRST_PAGE_BUTTON);
+  const firstPageButton = findElement<HTMLButtonElement>(SELECTORS.BUTTON.FIRST_PAGE);
 
   if (!firstPageButton) {
     console.warn('[PageManager] First page button not found, trying previous page repeatedly');
@@ -225,7 +225,7 @@ async function goToFirstPageByPrevious(maxAttempts: number = 20): Promise<boolea
   let attempts = 0;
 
   while (!isOnFirstPage() && attempts < maxAttempts) {
-    const prevButton = findElement<HTMLButtonElement>(SELECTORS.PREVIOUS_PAGE_BUTTON);
+    const prevButton = findElement<HTMLButtonElement>(SELECTORS.BUTTON.PREV_PAGE);
 
     if (!prevButton || !isElementInteractive(prevButton)) {
       console.warn('[PageManager] Cannot go back further');
@@ -271,7 +271,7 @@ export async function ensureFirstPage(maxRetries: number = 3): Promise<boolean> 
  */
 export function isTimeSortedDescending(): boolean {
   // 检查排序按钮的状态或排序指示器
-  const sortButton = findElement(SELECTORS.SORT_BY_DATE_BUTTON);
+  const sortButton = findElement(SELECTORS.SORT.SORT_BY_DATE);
   
   if (!sortButton) {
     console.warn('[PageManager] Cannot find sort by date button');
@@ -294,7 +294,7 @@ export function isTimeSortedDescending(): boolean {
 export async function sortByTimeDescending(): Promise<boolean> {
   console.log('[PageManager] Attempting to sort by time (descending)');
 
-  const sortButton = findElement<HTMLButtonElement>(SELECTORS.SORT_BY_DATE_BUTTON);
+  const sortButton = findElement<HTMLButtonElement>(SELECTORS.SORT.SORT_BY_DATE);
 
   if (!sortButton) {
     console.error('[PageManager] Sort by date button not found');
@@ -357,10 +357,10 @@ export async function ensureTimeSortedList(maxRetries: number = 2): Promise<bool
 
 /**
  * 获取当前页面的所有活动行元素
- * @returns NodeListOf<HTMLElement>
+ * @returns HTMLElement[]
  */
-export function getActivityRowElements(): NodeListOf<HTMLElement> {
-  return findAllElements(SELECTORS.ACTIVITY_ROW);
+export function getActivityRowElements(): HTMLElement[] {
+  return findAllElements(SELECTORS.ACTIVITY.ROW);
 }
 
 /**
@@ -370,7 +370,7 @@ export function getActivityRowElements(): NodeListOf<HTMLElement> {
  */
 export function extractActivityId(activityRow: HTMLElement): string | null {
   // 尝试从 data 属性获取
-  const idFromData = activityRow.getAttribute(SELECTORS.ACTIVITY_ID_DATA_ATTR);
+  const idFromData = activityRow.getAttribute('data-activity-id');
   if (idFromData) {
     return idFromData;
   }

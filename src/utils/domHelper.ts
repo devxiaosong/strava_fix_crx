@@ -6,29 +6,60 @@
 import { CURRENT_DELAYS, delay } from '~/config/delays';
 
 /**
- * 查找单个元素
- * @param selector - CSS选择器
+ * 查找单个元素（使用 XPath）
+ * @param xpath - XPath 表达式
  * @param parent - 父元素（可选）
  * @returns 找到的元素或null
  */
 export function findElement<T extends HTMLElement = HTMLElement>(
-  selector: string,
-  parent: HTMLElement | Document = document
+  xpath: string,
+  parent: Node = document
 ): T | null {
-  return parent.querySelector<T>(selector);
+  try {
+    const result = document.evaluate(
+      xpath,
+      parent,
+      null,
+      XPathResult.FIRST_ORDERED_NODE_TYPE,
+      null
+    );
+    return result.singleNodeValue as T | null;
+  } catch (error) {
+    console.error(`[DOM] XPath query failed: ${xpath}`, error);
+    return null;
+  }
 }
 
 /**
- * 查找所有匹配的元素
- * @param selector - CSS选择器
+ * 查找所有匹配的元素（使用 XPath）
+ * @param xpath - XPath 表达式
  * @param parent - 父元素（可选）
- * @returns NodeListOf<HTMLElement>
+ * @returns HTMLElement 数组
  */
 export function findAllElements<T extends HTMLElement = HTMLElement>(
-  selector: string,
-  parent: HTMLElement | Document = document
-): NodeListOf<T> {
-  return parent.querySelectorAll<T>(selector);
+  xpath: string,
+  parent: Node = document
+): T[] {
+  try {
+    const result = document.evaluate(
+      xpath,
+      parent,
+      null,
+      XPathResult.ORDERED_NODE_SNAPSHOT_TYPE,
+      null
+    );
+    const elements: T[] = [];
+    for (let i = 0; i < result.snapshotLength; i++) {
+      const node = result.snapshotItem(i);
+      if (node) {
+        elements.push(node as T);
+      }
+    }
+    return elements;
+  } catch (error) {
+    console.error(`[DOM] XPath query all failed: ${xpath}`, error);
+    return [];
+  }
 }
 
 /**
@@ -79,39 +110,39 @@ export function setInputValue(
 }
 
 /**
- * 检查元素是否存在
- * @param selector - CSS选择器
+ * 检查元素是否存在（使用 XPath）
+ * @param xpath - XPath 表达式
  * @param parent - 父元素（可选）
  * @returns boolean 是否存在
  */
 export function elementExists(
-  selector: string,
-  parent: HTMLElement | Document = document
+  xpath: string,
+  parent: Node = document
 ): boolean {
-  return parent.querySelector(selector) !== null;
+  return findElement(xpath, parent) !== null;
 }
 
 /**
- * 等待元素出现
- * @param selector - CSS选择器
+ * 等待元素出现（使用 XPath）
+ * @param xpath - XPath 表达式
  * @param timeout - 超时时间（毫秒）
  * @returns Promise<HTMLElement | null>
  */
 export async function waitForElement(
-  selector: string,
+  xpath: string,
   timeout: number = 5000
 ): Promise<HTMLElement | null> {
   const startTime = Date.now();
   
   while (Date.now() - startTime < timeout) {
-    const element = findElement<HTMLElement>(selector);
+    const element = findElement<HTMLElement>(xpath);
     if (element) {
       return element;
     }
     await delay(100);
   }
 
-  console.warn('[DOM] Element not found:', selector);
+  console.warn('[DOM] Element not found:', xpath);
   return null;
 }
 
@@ -133,15 +164,95 @@ export function isElementVisible(element: HTMLElement | null): boolean {
 }
 
 /**
- * 获取元素的文本内容
- * @param selector - CSS选择器
+ * 获取元素的文本内容（使用 XPath）
+ * @param xpath - XPath 表达式
  * @param parent - 父元素（可选）
  * @returns string | null
  */
 export function getElementText(
-  selector: string,
-  parent: HTMLElement | Document = document
+  xpath: string,
+  parent: Node = document
 ): string | null {
-  const element = findElement(selector, parent);
+  const element = findElement(xpath, parent);
   return element ? element.textContent : null;
 }
+
+/**
+ * 验证 XPath 选择器是否有效
+ * 可以在开发时用于测试选择器
+ * 
+ * @param xpath - 要验证的 XPath 选择器
+ * @returns 选择器是否有效且有匹配元素
+ */
+export function validateSelector(xpath: string): boolean {
+  try {
+    const result = document.evaluate(
+      xpath,
+      document,
+      null,
+      XPathResult.ORDERED_NODE_SNAPSHOT_TYPE,
+      null
+    );
+    const isValid = result.snapshotLength > 0;
+    console.log(`[XPath验证] ${xpath}: ${isValid ? '✅ 有效' : '❌ 无匹配'}`);
+    return isValid;
+  } catch (error) {
+    console.error(`[XPath验证] ${xpath}: ❌ 语法错误`, error);
+    return false;
+  }
+}
+
+/**
+ * 批量验证 XPath 选择器组
+ * 用于开发和调试
+ * 
+ * @param xpathGroup - XPath 选择器组对象
+ * @returns 验证结果摘要
+ */
+export function validateSelectorGroup(xpathGroup: Record<string, string>): {
+  total: number;
+  valid: number;
+  invalid: string[];
+} {
+  const results = {
+    total: 0,
+    valid: 0,
+    invalid: [] as string[]
+  };
+  
+  for (const [key, xpath] of Object.entries(xpathGroup)) {
+    results.total++;
+    if (validateSelector(xpath)) {
+      results.valid++;
+    } else {
+      results.invalid.push(`${key}: ${xpath}`);
+    }
+  }
+  
+  console.log(`[XPath选择器组验证] ${results.valid}/${results.total} 有效`);
+  if (results.invalid.length > 0) {
+    console.warn('[无效XPath选择器]:', results.invalid);
+  }
+  
+  return results;
+}
+
+/**
+ * XPath 查询工具函数：查询单个元素
+ * （findElement 的别名，保持向后兼容）
+ * 
+ * @param xpath - XPath 表达式
+ * @param contextNode - 上下文节点，默认为 document
+ * @returns 找到的第一个元素，如果没有则返回 null
+ */
+export const queryByXPath = findElement;
+
+/**
+ * XPath 查询工具函数：查询所有匹配的元素
+ * （findAllElements 的别名，保持向后兼容）
+ * 
+ * @param xpath - XPath 表达式
+ * @param contextNode - 上下文节点，默认为 document
+ * @returns 所有匹配的元素数组
+ */
+export const queryAllByXPath = findAllElements;

@@ -1,6 +1,7 @@
 import type { BulkEditFields, UpdateStatus } from "~/types/strava"
 import { CURRENT_DELAYS, delay } from "~/config/delays"
-import { XPATH_SELECTORS, queryByXPath, queryAllByXPath } from "~/config/selectors"
+import { SELECTORS } from "~/config/selectors"
+import { queryByXPath, queryAllByXPath } from "~/utils/domHelper"
 
 /**
  * 更新当前页面的所有活动
@@ -8,7 +9,7 @@ import { XPATH_SELECTORS, queryByXPath, queryAllByXPath } from "~/config/selecto
 const updateCurrentPageActivities = async (fields: BulkEditFields): Promise<number> => {
   // 1. 点击所有快速编辑按钮
   const quickEditButtons = queryAllByXPath<HTMLButtonElement>(
-    XPATH_SELECTORS.QUICK_EDIT_BUTTON
+    SELECTORS.ACTIVITY.QUICK_EDIT_BUTTON
   )
 
   if (quickEditButtons.length === 0) {
@@ -24,7 +25,7 @@ const updateCurrentPageActivities = async (fields: BulkEditFields): Promise<numb
   // 2. 填充骑行类型
   if (fields.rideType) {
     const rideTypeSelects = queryAllByXPath<HTMLSelectElement>(
-      XPATH_SELECTORS.RIDE_TYPE_SELECT
+      SELECTORS.FORM.RIDE_TYPE
     )
     rideTypeSelects.forEach((select) => {
       select.value = fields.rideType!
@@ -35,7 +36,7 @@ const updateCurrentPageActivities = async (fields: BulkEditFields): Promise<numb
   // 3. 填充自行车
   if (fields.bike) {
     const bikeSelects = queryAllByXPath<HTMLSelectElement>(
-      XPATH_SELECTORS.BIKE_SELECT
+      SELECTORS.FORM.BIKE
     )
     bikeSelects.forEach((select) => {
       select.value = fields.bike!
@@ -46,7 +47,7 @@ const updateCurrentPageActivities = async (fields: BulkEditFields): Promise<numb
   // 4. 填充跑鞋
   if (fields.shoes) {
     const shoesSelects = queryAllByXPath<HTMLSelectElement>(
-      XPATH_SELECTORS.SHOES_SELECT
+      SELECTORS.FORM.SHOES
     )
     shoesSelects.forEach((select) => {
       select.value = fields.shoes!
@@ -57,7 +58,7 @@ const updateCurrentPageActivities = async (fields: BulkEditFields): Promise<numb
   // 5. 填充隐私设置
   if (fields.visibility) {
     const visibilitySelects = queryAllByXPath<HTMLSelectElement>(
-      XPATH_SELECTORS.VISIBILITY_SELECT
+      SELECTORS.FORM.VISIBILITY
     )
     visibilitySelects.forEach((select) => {
       select.value = fields.visibility!
@@ -70,7 +71,7 @@ const updateCurrentPageActivities = async (fields: BulkEditFields): Promise<numb
 
   // 6. 提交所有修改
   const submitButtons = queryAllByXPath<HTMLButtonElement>(
-    XPATH_SELECTORS.SUBMIT_BUTTON
+    SELECTORS.BUTTON.SUBMIT
   )
   submitButtons.forEach((button) => button.click())
 
@@ -85,7 +86,7 @@ const updateCurrentPageActivities = async (fields: BulkEditFields): Promise<numb
  */
 const hasNextPage = (): boolean => {
   const nextButton = queryByXPath<HTMLButtonElement>(
-    XPATH_SELECTORS.NEXT_PAGE_BUTTON
+    SELECTORS.BUTTON.NEXT_PAGE
   )
   return nextButton !== null && !nextButton.disabled
 }
@@ -95,7 +96,7 @@ const hasNextPage = (): boolean => {
  */
 const goToNextPage = async (): Promise<boolean> => {
   const nextButton = queryByXPath<HTMLButtonElement>(
-    XPATH_SELECTORS.NEXT_PAGE_BUTTON
+    SELECTORS.BUTTON.NEXT_PAGE
   )
   
   if (!nextButton || nextButton.disabled) {
@@ -116,7 +117,7 @@ const goToNextPage = async (): Promise<boolean> => {
 const goBackToFirstPage = async (): Promise<void> => {
   while (true) {
     const prevButton = queryByXPath<HTMLButtonElement>(
-      XPATH_SELECTORS.PREV_PAGE_BUTTON
+      SELECTORS.BUTTON.PREV_PAGE
     )
     
     if (!prevButton || prevButton.disabled) {
@@ -186,6 +187,6 @@ export const updateActivities = async (
  * 获取当前页面的活动数量
  */
 export const getCurrentPageActivityCount = (): number => {
-  const activities = queryAllByXPath(XPATH_SELECTORS.ACTIVITY_ROW)
+  const activities = queryAllByXPath(SELECTORS.ACTIVITY.ROW)
   return activities.length
 }

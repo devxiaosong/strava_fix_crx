@@ -106,7 +106,15 @@ export const getInlineAnchor: PlasmoGetInlineAnchor = async () => {
   // Wait for page to load
   await new Promise((resolve) => {
     const checkInterval = setInterval(() => {
-      const filterPanel = document.querySelector(".search .panel")
+      // 使用 XPath 查询
+      const result = document.evaluate(
+        "//*[contains(@class, 'search')]//*[contains(@class, 'panel')] | //*[contains(@class, 'filters-panel')]",
+        document,
+        null,
+        XPathResult.FIRST_ORDERED_NODE_TYPE,
+        null
+      )
+      const filterPanel = result.singleNodeValue
       if (filterPanel) {
         clearInterval(checkInterval)
         resolve(filterPanel)
@@ -120,7 +128,15 @@ export const getInlineAnchor: PlasmoGetInlineAnchor = async () => {
     }, 5000)
   })
 
-  return document.querySelector(".search .panel")
+  // 使用 XPath 查询
+  const result = document.evaluate(
+    "//*[contains(@class, 'search')]//*[contains(@class, 'panel')] | //*[contains(@class, 'filters-panel')]",
+    document,
+    null,
+    XPathResult.FIRST_ORDERED_NODE_TYPE,
+    null
+  )
+  return result.singleNodeValue as Element
 }
 
 // Configure Shadow DOM ID

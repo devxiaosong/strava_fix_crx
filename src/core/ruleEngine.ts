@@ -69,11 +69,11 @@ function evaluateDateRange(
   dateRange: { start: number | string; end: number | string },
   activity: Activity
 ): boolean {
-  if (!activity.start_date) {
+  if (!activity.date) {
     return false;
   }
 
-  const activityTime = new Date(activity.start_date).getTime();
+  const activityTime = new Date(activity.date).getTime();
   const startTime = typeof dateRange.start === 'number'
     ? dateRange.start
     : new Date(dateRange.start).getTime();
@@ -113,8 +113,8 @@ function evaluateDistanceRange(
  * @returns boolean
  */
 function evaluateRideType(rideType: string, activity: Activity): boolean {
-  // 骑行类型可能存储在不同的字段中，需要根据实际情况调整
-  return activity.workout_type === rideType || activity.ride_type === rideType;
+  // 检查活动的骑行类型
+  return activity.ride_type === rideType;
 }
 
 /**
@@ -191,46 +191,50 @@ export function compileRule(filterConfig: FilterConfig): RuleConfig {
   const conditions: ConditionConfig[] = [];
 
   // 运动类型条件
-  if (filterConfig.sportType) {
+  if (filterConfig.sportTypes && filterConfig.sportTypes.length > 0) {
     conditions.push({
       type: 'sportType',
       enabled: true,
-      value: filterConfig.sportType,
+      value: filterConfig.sportTypes,
     });
   }
 
   // 日期范围条件
-  if (filterConfig.dateRange && filterConfig.dateRange.start && filterConfig.dateRange.end) {
-    conditions.push({
-      type: 'dateRange',
-      enabled: true,
-      value: {
-        start: filterConfig.dateRange.start,
-        end: filterConfig.dateRange.end,
-      },
+  if (filterConfig.dateRanges && filterConfig.dateRanges.length > 0) {
+    filterConfig.dateRanges.forEach(dateRange => {
+      if (dateRange.start && dateRange.end) {
+        conditions.push({
+          type: 'dateRange',
+          enabled: true,
+          value: {
+            start: dateRange.start,
+            end: dateRange.end,
+          },
+        });
+      }
     });
   }
 
   // 距离范围条件
   if (filterConfig.distanceRange && 
-      filterConfig.distanceRange.min !== undefined && 
-      filterConfig.distanceRange.max !== undefined) {
+      filterConfig.distanceRange[0] !== undefined && 
+      filterConfig.distanceRange[1] !== undefined) {
     conditions.push({
       type: 'distanceRange',
       enabled: true,
       value: {
-        min: filterConfig.distanceRange.min,
-        max: filterConfig.distanceRange.max,
+        min: filterConfig.distanceRange[0],
+        max: filterConfig.distanceRange[1],
       },
     });
   }
 
   // 骑行类型条件
-  if (filterConfig.rideType) {
+  if (filterConfig.rideTypes && filterConfig.rideTypes.length > 0) {
     conditions.push({
       type: 'rideType',
       enabled: true,
-      value: filterConfig.rideType,
+      value: filterConfig.rideTypes,
     });
   }
 
@@ -260,8 +264,8 @@ export function shouldStopPaging(activities: Activity[], rule: RuleConfig): bool
 
   // 检查当前页的所有活动是否都早于开始时间
   const allBeforeRange = activities.every(activity => {
-    if (!activity.start_date) return false;
-    const activityTime = new Date(activity.start_date).getTime();
+    if (!activity.date) return false;
+    const activityTime = new Date(activity.date).getTime();
     return activityTime < startTime;
   });
 

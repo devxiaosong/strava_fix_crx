@@ -117,7 +117,11 @@ function interceptFetch(): void {
 
   window.fetch = async function (...args: Parameters<typeof fetch>): Promise<Response> {
     const [resource, config] = args;
-    const url = typeof resource === 'string' ? resource : resource.url;
+    const url = typeof resource === 'string' 
+      ? resource 
+      : resource instanceof Request 
+        ? resource.url 
+        : resource.toString();
 
     // 调用原始 fetch
     const response = await originalFetch.apply(this, args);

@@ -1,13 +1,20 @@
 import type { GearItem } from '~/types/activity';
+import { NAV_SELECTORS } from '~/config/selectors';
 
 /**
  * Get athlete ID from the navigation menu
  */
 export function getAthleteId(): string | null {
   try {
-    const trainingLink = document.querySelector<HTMLAnchorElement>(
-      '#container-nav li[data-log-category="training"] a'
+    // 使用 XPath 查询
+    const result = document.evaluate(
+      NAV_SELECTORS.ATHLETE_ID_LINK,
+      document,
+      null,
+      XPathResult.FIRST_ORDERED_NODE_TYPE,
+      null
     );
+    const trainingLink = result.singleNodeValue as HTMLAnchorElement | null;
     
     if (!trainingLink) {
       console.error('Training link not found');
