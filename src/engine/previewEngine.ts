@@ -3,23 +3,21 @@
  * 负责扫描活动列表、应用规则筛选、并返回匹配的活动预览
  */
 
-import type { Activity, RuleConfig, FilterConfig, UpdateConfig } from '~/types/activity';
+import type { Activity, RuleConfig, FilterConfig } from '~/types/activity';
 import {
   preparePageForExecution,
   hasNextPage,
   goToNextPage,
   getCurrentPage,
-  getPageActivityIds,
   waitForPageLoad,
 } from '~/core/pageManager';
 import {
   initApiListener,
-  startListening,
   stopListening,
   waitForNextResponse,
 } from '~/core/apiListener';
 import { evaluateRule, shouldStopPaging, compileRule } from '~/core/ruleEngine';
-import { delay, CURRENT_DELAYS, getRetryDelay } from '~/config/delays';
+import { delay, getRetryDelay } from '~/config/delays';
 
 /**
  * 预览进度回调
@@ -272,70 +270,3 @@ export async function runPreview(config: PreviewConfig): Promise<PreviewResult> 
     };
   }
 }
-
-/**
- * 快速预览（仅扫描前N页）
- * @param config 预览配置
- * @param maxPages 最多扫描页数
- * @returns Promise<PreviewResult>
- */
-export async function runQuickPreview(
-  config: PreviewConfig,
-  maxPages: number = 3
-): Promise<PreviewResult> {
-  console.log(`[PreviewEngine] Starting quick preview (max ${maxPages} pages)`);
-
-  const originalOnProgress = config.onProgress;
-  let pageCount = 0;
-
-  // 包装进度回调，在达到最大页数时停止
-  const wrappedOnProgress = (progress: PreviewProgress) => {
-    pageCount = progress.currentPage;
-    if (originalOnProgress) {
-      originalOnProgress(progress);
-    }
-  };
-
-  const wrappedConfig: PreviewConfig = {
-    ...config,
-    onProgress: wrappedOnProgress,
-  };
-
-  // 使用修改后的 runPreview，但添加页数限制
-  // 这里可以通过在 scanPageActivities 中检查 pageCount 来实现
-  // 为简化，直接调用 runPreview
-  const result = await runPreview(wrappedConfig);
-
-  // 如果超过最大页数，标记为部分结果
-  if (pageCount >= maxPages) {
-    return {
-      ...result,
-      error: result.error || `Scanned first ${maxPages} pages only (quick preview)`,
-    };
-  }
-
-  return result;
-}
-
-/**
- * 重新扫描指定页面
- * @param pageNumber 页码
- * @param rule 规则配置
- * @returns Promise<Activity[]>
- */
-export async function rescanPage(
-  pageNumber: number,
-  rule: RuleConfig
-): Promise<Activity[]> {
-  console.log(`[PreviewEngine] Rescanning page ${pageNumber}`);
-
-  // 导航到指定页面（这里需要实现跳转到特定页的功能）
-  // 暂时省略，假设已经在目标页
-
-  const { activities } = await scanPageActivities(rule);
-  const matched = activities.filter(activity => evaluateRule(rule, activity));
-
-  console.log(`[PreviewEngine] Rescan complete: ${matched.length} activities matched`);
-  return matched;
-}
-
