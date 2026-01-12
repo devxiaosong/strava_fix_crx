@@ -2,6 +2,7 @@ import { useState } from "react"
 import type { PlasmoCSConfig, PlasmoGetInlineAnchor, PlasmoGetStyle } from "plasmo"
 import { ConfigProvider } from "antd"
 import { BulkEditModal } from "~components/bulk-edit/BulkEditModal"
+import { SELECTORS } from "~/config/selectors"
 
 // Import Ant Design styles
 import antdStyles from "data-text:antd/dist/reset.css"
@@ -106,9 +107,9 @@ export const getInlineAnchor: PlasmoGetInlineAnchor = async () => {
   // Wait for page to load
   await new Promise((resolve) => {
     const checkInterval = setInterval(() => {
-      // 使用 XPath 查询
+      // 使用集中管理的 XPath 选择器
       const result = document.evaluate(
-        "//*[contains(@class, 'search')]//*[contains(@class, 'panel')] | //*[contains(@class, 'filters-panel')]",
+        SELECTORS.FILTER.PANEL,
         document,
         null,
         XPathResult.FIRST_ORDERED_NODE_TYPE,
@@ -128,9 +129,9 @@ export const getInlineAnchor: PlasmoGetInlineAnchor = async () => {
     }, 5000)
   })
 
-  // 使用 XPath 查询
+  // 使用集中管理的 XPath 选择器
   const result = document.evaluate(
-    "//*[contains(@class, 'search')]//*[contains(@class, 'panel')] | //*[contains(@class, 'filters-panel')]",
+    SELECTORS.FILTER.PANEL,
     document,
     null,
     XPathResult.FIRST_ORDERED_NODE_TYPE,

@@ -39,6 +39,17 @@ export const ACTIVITY_SELECTORS = {
    * 活动日期（时间戳）
    */
   DATE: "//*[contains(@class, 'training-activity-row')]//*[contains(@class, 'activity-date')]",
+  
+  /**
+   * 活动链接（包含活动ID）
+   * 用于从 href 中提取活动ID
+   */
+  ACTIVITY_LINK: "a[href*=\"/activities/\"]",
+  
+  /**
+   * 活动ID的 data 属性名
+   */
+  DATA_ACTIVITY_ID: "data-activity-id",
 } as const
 
 /**
@@ -240,6 +251,24 @@ export const SORT_SELECTORS = {
    * 活动表头（可能包含排序控制）
    */
   TABLE_HEADER: "//*[contains(@class, 'activities-table')]//thead | //*[contains(@class, 'activity-list-header')]",
+  
+  /**
+   * 排序状态 CSS 类名
+   */
+  SORT_CLASSES: {
+    DESC: 'desc',
+    DESCENDING: 'descending',
+  },
+  
+  /**
+   * 排序 ARIA 属性名
+   */
+  SORT_ARIA_ATTR: 'aria-sort',
+  
+  /**
+   * 降序排序的 ARIA 属性值
+   */
+  SORT_ARIA_DESCENDING: 'descending',
 } as const
 
 /**

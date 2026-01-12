@@ -280,9 +280,9 @@ export function isTimeSortedDescending(): boolean {
 
   // 检查是否有降序排序的指示（通常是特定的class或aria属性）
   const isDescending =
-    sortButton.classList.contains('desc') ||
-    sortButton.classList.contains('descending') ||
-    sortButton.getAttribute('aria-sort') === 'descending';
+    sortButton.classList.contains(SELECTORS.SORT.SORT_CLASSES.DESC) ||
+    sortButton.classList.contains(SELECTORS.SORT.SORT_CLASSES.DESCENDING) ||
+    sortButton.getAttribute(SELECTORS.SORT.SORT_ARIA_ATTR) === SELECTORS.SORT.SORT_ARIA_DESCENDING;
 
   return isDescending;
 }
@@ -370,14 +370,14 @@ export function getActivityRowElements(): HTMLElement[] {
  */
 export function extractActivityId(activityRow: HTMLElement): string | null {
   // 尝试从 data 属性获取
-  const idFromData = activityRow.getAttribute('data-activity-id');
+  const idFromData = activityRow.getAttribute(SELECTORS.ACTIVITY.DATA_ACTIVITY_ID);
   if (idFromData) {
     return idFromData;
   }
 
   // 尝试从其他可能的属性或子元素中提取
   // 这里可能需要根据实际的Strava页面结构调整
-  const idFromHref = activityRow.querySelector('a[href*="/activities/"]');
+  const idFromHref = activityRow.querySelector(SELECTORS.ACTIVITY.ACTIVITY_LINK);
   if (idFromHref) {
     const href = idFromHref.getAttribute('href');
     const match = href?.match(/\/activities\/(\d+)/);
