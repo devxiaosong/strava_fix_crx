@@ -40,13 +40,21 @@ export function isValidActivityId(activityId: string | null | undefined): boolea
  * @returns boolean
  */
 export function isValidDateRange(
-  startDate: number | string | null | undefined,
-  endDate: number | string | null | undefined
+  startDate: number | string | Date | null | undefined,
+  endDate: number | string | Date | null | undefined
 ): boolean {
   if (!startDate || !endDate) return false;
 
-  const start = typeof startDate === 'number' ? startDate : new Date(startDate).getTime();
-  const end = typeof endDate === 'number' ? endDate : new Date(endDate).getTime();
+  const start = startDate instanceof Date 
+    ? startDate.getTime() 
+    : typeof startDate === 'number' 
+      ? startDate 
+      : new Date(startDate).getTime();
+  const end = endDate instanceof Date 
+    ? endDate.getTime() 
+    : typeof endDate === 'number' 
+      ? endDate 
+      : new Date(endDate).getTime();
 
   // 检查日期是否有效
   if (isNaN(start) || isNaN(end)) return false;
@@ -137,20 +145,18 @@ export function isValidRule(rule: RuleConfig): boolean {
 export function isValidFilterConfig(filterConfig: FilterConfig | null | undefined): boolean {
   if (!filterConfig || typeof filterConfig !== 'object') return false;
 
-  // 检查必要字段
-  if (!filterConfig.scenario) return false;
-
   // 验证日期范围（如果提供）
-  if (filterConfig.dateRange) {
-    const { start, end } = filterConfig.dateRange;
-    if (start && end && !isValidDateRange(start, end)) {
+  if (filterConfig.dateRanges && filterConfig.dateRanges.length > 0) {
+    for (const dateRange of filterConfig.dateRanges) {
+      if (dateRange.start && dateRange.end && !isValidDateRange(dateRange.start, dateRange.end)) {
       return false;
+      }
     }
   }
 
   // 验证距离范围（如果提供）
   if (filterConfig.distanceRange) {
-    const { min, max } = filterConfig.distanceRange;
+    const [min, max] = filterConfig.distanceRange;
     if (min !== undefined && max !== undefined && !isValidDistanceRange(min, max)) {
       return false;
     }
@@ -169,10 +175,9 @@ export function isValidUpdateConfig(updateConfig: UpdateConfig | null | undefine
 
   // 至少需要有一个字段要更新
   const hasUpdate =
-    updateConfig.bikeId !== undefined ||
-    updateConfig.shoesId !== undefined ||
-    updateConfig.visibility !== undefined ||
-    updateConfig.workoutType !== undefined;
+    updateConfig.gearId !== undefined ||
+    updateConfig.privacy !== undefined ||
+    updateConfig.rideType !== undefined;
 
   return hasUpdate;
 }

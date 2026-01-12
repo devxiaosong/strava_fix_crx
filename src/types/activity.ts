@@ -190,6 +190,84 @@ export interface RuleMatchResult {
 // ==================== 任务状态类型 ====================
 
 /**
+ * 执行进度状态
+ * 用于任务管理器跟踪执行进度的详细信息
+ */
+export interface ExecutionProgressState {
+  /** 当前页码 */
+  currentPage: number;
+  
+  /** 总页数 */
+  totalPages: number;
+  
+  /** 已处理活动数 */
+  processedActivities: number;
+  
+  /** 成功更新数 */
+  successfulUpdates: number;
+  
+  /** 失败更新数 */
+  failedUpdates: number;
+  
+  /** 跳过活动数 */
+  skippedActivities: number;
+  
+  /** 失败活动详情列表 */
+  failedActivityDetails: FailedActivity[];
+  
+  /** 是否已暂停 */
+  isPaused: boolean;
+  
+  /** 预计剩余时间（秒） */
+  estimatedRemainingTime: number;
+}
+
+/**
+ * 任务数据
+ * 任务管理器使用的完整任务数据结构
+ */
+export interface TaskData {
+  /** 任务ID */
+  id: string;
+  
+  /** 场景类型 */
+  scenario: ScenarioType;
+  
+  /** 筛选条件 */
+  filters: FilterConfig;
+  
+  /** 更新值 */
+  updates: UpdateConfig;
+  
+  /** 编译后的规则 */
+  rule: RuleConfig;
+  
+  /** 任务状态 */
+  status: TaskStatus;
+  
+  /** 执行进度 */
+  progress: ExecutionProgressState;
+  
+  /** 创建时间戳 */
+  createdAt: number;
+  
+  /** 更新时间戳 */
+  updatedAt?: number;
+  
+  /** 开始时间戳 */
+  startedAt?: number;
+  
+  /** 暂停时间戳 */
+  pausedAt?: number;
+  
+  /** 完成时间戳 */
+  completedAt?: number;
+  
+  /** 错误信息（任务失败时） */
+  error?: string;
+}
+
+/**
  * 任务状态 (TaskState)
  * 保存到 Chrome Storage 的完整任务状态
  */

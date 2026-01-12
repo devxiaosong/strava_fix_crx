@@ -337,20 +337,16 @@ export function formatFilterDescription(filters: any): string {
 export function formatUpdateDescription(updates: any): string[] {
   const descriptions: string[] = [];
 
-  if (updates.bikeId !== undefined) {
-    descriptions.push(`Update bike`);
+  if (updates.gearId !== undefined) {
+    descriptions.push(`Update gear`);
   }
 
-  if (updates.shoesId !== undefined) {
-    descriptions.push(`Update shoes`);
+  if (updates.privacy !== undefined) {
+    descriptions.push(`Update visibility to: ${formatPrivacyLevel(updates.privacy)}`);
   }
 
-  if (updates.visibility !== undefined) {
-    descriptions.push(`Update visibility to: ${formatPrivacyLevel(updates.visibility)}`);
-  }
-
-  if (updates.workoutType !== undefined) {
-    descriptions.push(`Update ride type to: ${formatRideType(updates.workoutType)}`);
+  if (updates.rideType !== undefined) {
+    descriptions.push(`Update ride type to: ${formatRideType(updates.rideType)}`);
   }
 
   return descriptions.length > 0 ? descriptions : ['No updates'];

@@ -203,13 +203,13 @@ export function compileRule(filterConfig: FilterConfig): RuleConfig {
   if (filterConfig.dateRanges && filterConfig.dateRanges.length > 0) {
     filterConfig.dateRanges.forEach(dateRange => {
       if (dateRange.start && dateRange.end) {
-        conditions.push({
-          type: 'dateRange',
-          enabled: true,
-          value: {
+    conditions.push({
+      type: 'dateRange',
+      enabled: true,
+      value: {
             start: dateRange.start,
             end: dateRange.end,
-          },
+      },
         });
       }
     });

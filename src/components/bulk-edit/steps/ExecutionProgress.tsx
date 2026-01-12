@@ -37,6 +37,7 @@ export function ExecutionProgress({ scenario, filters, updates, onComplete }: Ex
     const startExecution = async () => {
       try {
         const result = await runExecution({
+          scenario,
           filters,
           updates,
           onProgress: (progressData: ExecutionProgressData) => {
@@ -96,7 +97,7 @@ export function ExecutionProgress({ scenario, filters, updates, onComplete }: Ex
 
   const handlePauseResume = () => {
     if (isPaused) {
-      resumeExecution({ filters, updates });
+      resumeExecution({ scenario, filters, updates });
       setIsPaused(false);
     } else {
       pauseExecution();

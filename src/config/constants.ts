@@ -72,10 +72,22 @@ export const STORAGE_KEYS = {
   TASK_STATE: 'strava_bulk_edit_task_state',
   
   /**
+   * 批量编辑任务数据键
+   * 存储完整的任务数据
+   */
+  BULK_EDIT_TASK: 'strava_bulk_edit_task',
+  
+  /**
    * 任务时间戳键
    * 记录任务创建/更新时间，用于判断过期
    */
   TASK_TIMESTAMP: 'strava_bulk_edit_task_timestamp',
+  
+  /**
+   * 运动员ID键
+   * 存储当前登录运动员的ID
+   */
+  ATHLETE_ID: 'strava_bulk_edit_athlete_id',
   
   /**
    * 用户配置键

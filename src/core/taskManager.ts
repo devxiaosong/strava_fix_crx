@@ -11,6 +11,7 @@ import type {
   UpdateConfig,
   RuleConfig,
   ExecutionProgressState,
+  FailedActivity,
 } from '~/types/activity';
 import {
   saveTaskData,
@@ -304,9 +305,17 @@ export async function recordFailedUpdate(
   }
 
   const newCount = managerState.currentTask.progress.failedUpdates + 1;
+  const failedActivity: FailedActivity = {
+    id: activityId,
+    name: activityName,
+    date: new Date().toISOString(),
+    error,
+    retryCount: 0,
+    failedAt: Date.now(),
+  };
   const failedDetails = [
     ...managerState.currentTask.progress.failedActivityDetails,
-    { id: activityId, name: activityName, error },
+    failedActivity,
   ];
 
   await updateProgress({

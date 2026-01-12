@@ -3,7 +3,7 @@
  * 负责批量更新活动的完整执行流程
  */
 
-import type { Activity, RuleConfig, FilterConfig, UpdateConfig } from '~/types/activity';
+import type { Activity, RuleConfig, FilterConfig, UpdateConfig, ScenarioType } from '~/types/activity';
 import type { BulkEditFields } from '~/types/strava';
 import {
   preparePageForExecution,
@@ -76,6 +76,7 @@ export interface ExecutionResult {
  * 执行配置
  */
 export interface ExecutionConfig {
+  scenario: ScenarioType;
   filters: FilterConfig;
   updates: UpdateConfig;
   rule?: RuleConfig;
@@ -114,7 +115,7 @@ async function updateSingleActivity(
   try {
     // 1. 点击快速编辑按钮
     const quickEditButton = findElement<HTMLButtonElement>(
-      SELECTORS.QUICK_EDIT_BUTTON,
+      SELECTORS.ACTIVITY.QUICK_EDIT_BUTTON,
       activityRow
     );
 
@@ -125,44 +126,44 @@ async function updateSingleActivity(
     await clickElement(quickEditButton, CURRENT_DELAYS.QUICK_EDIT_CLICK);
 
     // 2. 填充表单字段
-    if (updates.bikeId) {
-      const bikeSelect = findElement<HTMLSelectElement>(SELECTORS.BIKE_SELECT, activityRow);
+    if (updates.gearId) {
+      // 尝试自行车选择器
+      const bikeSelect = findElement<HTMLSelectElement>(SELECTORS.FORM.BIKE, activityRow);
       if (bikeSelect) {
-        setInputValue(bikeSelect, updates.bikeId);
-      }
+        setInputValue(bikeSelect, updates.gearId);
     }
 
-    if (updates.shoesId) {
-      const shoesSelect = findElement<HTMLSelectElement>(SELECTORS.SHOES_SELECT, activityRow);
+      // 尝试跑鞋选择器
+      const shoesSelect = findElement<HTMLSelectElement>(SELECTORS.FORM.SHOES, activityRow);
       if (shoesSelect) {
-        setInputValue(shoesSelect, updates.shoesId);
+        setInputValue(shoesSelect, updates.gearId);
       }
     }
 
-    if (updates.visibility) {
+    if (updates.privacy) {
       const visibilitySelect = findElement<HTMLSelectElement>(
-        SELECTORS.VISIBILITY_SELECT,
+        SELECTORS.FORM.VISIBILITY,
         activityRow
       );
       if (visibilitySelect) {
-        setInputValue(visibilitySelect, updates.visibility);
+        setInputValue(visibilitySelect, updates.privacy);
       }
     }
 
-    if (updates.workoutType) {
+    if (updates.rideType) {
       const workoutSelect = findElement<HTMLSelectElement>(
-        SELECTORS.RIDE_TYPE_SELECT,
+        SELECTORS.FORM.RIDE_TYPE,
         activityRow
       );
       if (workoutSelect) {
-        setInputValue(workoutSelect, updates.workoutType);
+        setInputValue(workoutSelect, updates.rideType);
       }
     }
 
     await delay(CURRENT_DELAYS.FORM_FILL);
 
     // 3. 提交表单
-    const submitButton = findElement<HTMLButtonElement>(SELECTORS.SUBMIT_BUTTON, activityRow);
+    const submitButton = findElement<HTMLButtonElement>(SELECTORS.BUTTON.SUBMIT, activityRow);
 
     if (!submitButton) {
       throw new Error('Submit button not found');
@@ -311,7 +312,7 @@ async function processPageActivities(
 export async function runExecution(config: ExecutionConfig): Promise<ExecutionResult> {
   console.log('[ExecuteEngine] Starting execution', config);
 
-  const { filters, updates, onProgress, maxRetries = 2, continueOnError = true } = config;
+  const { scenario, filters, updates, onProgress, maxRetries = 2, continueOnError = true } = config;
   const rule = config.rule || compileRule(filters);
 
   let totalProcessed = 0;
@@ -336,7 +337,7 @@ export async function runExecution(config: ExecutionConfig): Promise<ExecutionRe
     // 2. 创建或加载任务
     const existingTask = getCurrentTask();
     if (!existingTask || !canResumeTask()) {
-      await createTask(filters.scenario, filters, updates);
+      await createTask(scenario, filters, updates);
     }
 
     await startTask();
