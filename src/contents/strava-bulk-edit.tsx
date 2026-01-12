@@ -109,7 +109,7 @@ export const getInlineAnchor: PlasmoGetInlineAnchor = async () => {
     const checkInterval = setInterval(() => {
       // 使用集中管理的 XPath 选择器
       const result = document.evaluate(
-        SELECTORS.FILTER.PANEL,
+        SELECTORS.PAGE.FILTER_PANEL,
         document,
         null,
         XPathResult.FIRST_ORDERED_NODE_TYPE,
@@ -131,7 +131,7 @@ export const getInlineAnchor: PlasmoGetInlineAnchor = async () => {
 
   // 使用集中管理的 XPath 选择器
   const result = document.evaluate(
-    SELECTORS.FILTER.PANEL,
+    SELECTORS.PAGE.FILTER_PANEL,
     document,
     null,
     XPathResult.FIRST_ORDERED_NODE_TYPE,

@@ -67,7 +67,7 @@ export async function waitForElement(
  * @returns 当前页码，默认为1
  */
 export function getCurrentPage(): number {
-  const currentPageElement = findElement(SELECTORS.STATE.CURRENT_PAGE);
+  const currentPageElement = findElement(SELECTORS.PAGINATION.CURRENT_PAGE);
   
   if (!currentPageElement) {
     console.warn('[PageManager] Cannot find current page indicator, assuming page 1');
@@ -86,7 +86,7 @@ export function getCurrentPage(): number {
  */
 export function getTotalPages(): number | null {
   // 尝试从分页元素中提取总页数
-  const lastPageButton = findElement(SELECTORS.BUTTON.LAST_PAGE);
+  const lastPageButton = findElement(SELECTORS.PAGINATION.LAST_PAGE);
   
   if (!lastPageButton) {
     console.warn('[PageManager] Cannot find last page button');
@@ -104,7 +104,7 @@ export function getTotalPages(): number | null {
  * @returns boolean
  */
 export function hasNextPage(): boolean {
-  const nextButton = findElement<HTMLButtonElement>(SELECTORS.BUTTON.NEXT_PAGE);
+  const nextButton = findElement<HTMLButtonElement>(SELECTORS.PAGINATION.NEXT_PAGE);
   
   if (!nextButton) {
     console.log('[PageManager] No next page button found');
@@ -123,7 +123,7 @@ export async function goToNextPage(): Promise<boolean> {
   console.log('[PageManager] Attempting to go to next page');
 
   const currentPage = getCurrentPage();
-  const nextButton = findElement<HTMLButtonElement>(SELECTORS.BUTTON.NEXT_PAGE);
+  const nextButton = findElement<HTMLButtonElement>(SELECTORS.PAGINATION.NEXT_PAGE);
 
   if (!nextButton) {
     console.warn('[PageManager] Next page button not found');
@@ -181,7 +181,7 @@ export async function goToFirstPage(): Promise<boolean> {
     return true;
   }
 
-  const firstPageButton = findElement<HTMLButtonElement>(SELECTORS.BUTTON.FIRST_PAGE);
+  const firstPageButton = findElement<HTMLButtonElement>(SELECTORS.PAGINATION.FIRST_PAGE);
 
   if (!firstPageButton) {
     console.warn('[PageManager] First page button not found, trying previous page repeatedly');
@@ -225,7 +225,7 @@ async function goToFirstPageByPrevious(maxAttempts: number = 20): Promise<boolea
   let attempts = 0;
 
   while (!isOnFirstPage() && attempts < maxAttempts) {
-    const prevButton = findElement<HTMLButtonElement>(SELECTORS.BUTTON.PREV_PAGE);
+    const prevButton = findElement<HTMLButtonElement>(SELECTORS.PAGINATION.PREV_PAGE);
 
     if (!prevButton || !isElementInteractive(prevButton)) {
       console.warn('[PageManager] Cannot go back further');

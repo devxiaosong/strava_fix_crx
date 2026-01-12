@@ -1,5 +1,5 @@
 import type { GearItem } from '~/types/activity';
-import { NAV_SELECTORS } from '~/config/selectors';
+import { PAGE_SELECTORS } from '~/config/selectors';
 
 /**
  * Get athlete ID from the navigation menu
@@ -8,7 +8,7 @@ export function getAthleteId(): string | null {
   try {
     // 使用 XPath 查询
     const result = document.evaluate(
-      NAV_SELECTORS.ATHLETE_ID_LINK,
+      PAGE_SELECTORS.ATHLETE_ID_LINK,
       document,
       null,
       XPathResult.FIRST_ORDERED_NODE_TYPE,

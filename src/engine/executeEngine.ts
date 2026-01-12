@@ -128,13 +128,13 @@ async function updateSingleActivity(
     // 2. 填充表单字段
     if (updates.gearId) {
       // 尝试自行车选择器
-      const bikeSelect = findElement<HTMLSelectElement>(SELECTORS.FORM.BIKE, activityRow);
+      const bikeSelect = findElement<HTMLSelectElement>(SELECTORS.EDIT.BIKE, activityRow);
       if (bikeSelect) {
         setInputValue(bikeSelect, updates.gearId);
     }
 
       // 尝试跑鞋选择器
-      const shoesSelect = findElement<HTMLSelectElement>(SELECTORS.FORM.SHOES, activityRow);
+      const shoesSelect = findElement<HTMLSelectElement>(SELECTORS.EDIT.SHOES, activityRow);
       if (shoesSelect) {
         setInputValue(shoesSelect, updates.gearId);
       }
@@ -142,7 +142,7 @@ async function updateSingleActivity(
 
     if (updates.privacy) {
       const visibilitySelect = findElement<HTMLSelectElement>(
-        SELECTORS.FORM.VISIBILITY,
+        SELECTORS.EDIT.VISIBILITY,
         activityRow
       );
       if (visibilitySelect) {
@@ -152,7 +152,7 @@ async function updateSingleActivity(
 
     if (updates.rideType) {
       const workoutSelect = findElement<HTMLSelectElement>(
-        SELECTORS.FORM.RIDE_TYPE,
+        SELECTORS.EDIT.RIDE_TYPE,
         activityRow
       );
       if (workoutSelect) {
@@ -163,7 +163,7 @@ async function updateSingleActivity(
     await delay(CURRENT_DELAYS.FORM_FILL);
 
     // 3. 提交表单
-    const submitButton = findElement<HTMLButtonElement>(SELECTORS.BUTTON.SUBMIT, activityRow);
+    const submitButton = findElement<HTMLButtonElement>(SELECTORS.EDIT.SUBMIT, activityRow);
 
     if (!submitButton) {
       throw new Error('Submit button not found');

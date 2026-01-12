@@ -25,7 +25,7 @@ const updateCurrentPageActivities = async (fields: BulkEditFields): Promise<numb
   // 2. 填充骑行类型
   if (fields.rideType) {
     const rideTypeSelects = queryAllByXPath<HTMLSelectElement>(
-      SELECTORS.FORM.RIDE_TYPE
+      SELECTORS.EDIT.RIDE_TYPE
     )
     rideTypeSelects.forEach((select) => {
       select.value = fields.rideType!
@@ -36,7 +36,7 @@ const updateCurrentPageActivities = async (fields: BulkEditFields): Promise<numb
   // 3. 填充自行车
   if (fields.bike) {
     const bikeSelects = queryAllByXPath<HTMLSelectElement>(
-      SELECTORS.FORM.BIKE
+      SELECTORS.EDIT.BIKE
     )
     bikeSelects.forEach((select) => {
       select.value = fields.bike!
@@ -47,7 +47,7 @@ const updateCurrentPageActivities = async (fields: BulkEditFields): Promise<numb
   // 4. 填充跑鞋
   if (fields.shoes) {
     const shoesSelects = queryAllByXPath<HTMLSelectElement>(
-      SELECTORS.FORM.SHOES
+      SELECTORS.EDIT.SHOES
     )
     shoesSelects.forEach((select) => {
       select.value = fields.shoes!
@@ -58,7 +58,7 @@ const updateCurrentPageActivities = async (fields: BulkEditFields): Promise<numb
   // 5. 填充隐私设置
   if (fields.visibility) {
     const visibilitySelects = queryAllByXPath<HTMLSelectElement>(
-      SELECTORS.FORM.VISIBILITY
+      SELECTORS.EDIT.VISIBILITY
     )
     visibilitySelects.forEach((select) => {
       select.value = fields.visibility!
@@ -71,7 +71,7 @@ const updateCurrentPageActivities = async (fields: BulkEditFields): Promise<numb
 
   // 6. 提交所有修改
   const submitButtons = queryAllByXPath<HTMLButtonElement>(
-    SELECTORS.BUTTON.SUBMIT
+    SELECTORS.EDIT.SUBMIT
   )
   submitButtons.forEach((button) => button.click())
 
@@ -86,7 +86,7 @@ const updateCurrentPageActivities = async (fields: BulkEditFields): Promise<numb
  */
 const hasNextPage = (): boolean => {
   const nextButton = queryByXPath<HTMLButtonElement>(
-    SELECTORS.BUTTON.NEXT_PAGE
+    SELECTORS.PAGINATION.NEXT_PAGE
   )
   return nextButton !== null && !nextButton.disabled
 }
@@ -96,7 +96,7 @@ const hasNextPage = (): boolean => {
  */
 const goToNextPage = async (): Promise<boolean> => {
   const nextButton = queryByXPath<HTMLButtonElement>(
-    SELECTORS.BUTTON.NEXT_PAGE
+    SELECTORS.PAGINATION.NEXT_PAGE
   )
   
   if (!nextButton || nextButton.disabled) {
@@ -117,7 +117,7 @@ const goToNextPage = async (): Promise<boolean> => {
 const goBackToFirstPage = async (): Promise<void> => {
   while (true) {
     const prevButton = queryByXPath<HTMLButtonElement>(
-      SELECTORS.BUTTON.PREV_PAGE
+      SELECTORS.PAGINATION.PREV_PAGE
     )
     
     if (!prevButton || prevButton.disabled) {
