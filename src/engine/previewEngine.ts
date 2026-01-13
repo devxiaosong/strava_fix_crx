@@ -12,9 +12,11 @@ import {
   waitForPageLoad,
 } from '~/core/pageManager';
 import {
-  initApiListener,
-  stopListening,
+  hasCachedPage,
+  getCachedPageData,
   waitForNextResponse,
+  startListening,
+  stopListening,
 } from '~/core/apiListener';
 import { evaluateRule, shouldStopPaging, compileRule } from '~/core/ruleEngine';
 import { delay, getRetryDelay } from '~/config/delays';
@@ -57,19 +59,32 @@ export interface PreviewConfig {
 /**
  * 扫描单页活动并匹配规则
  * @param rule 规则配置
+ * @param currentPage 当前页码
  * @param maxRetries 最大重试次数
  * @returns Promise<{ activities: Activity[], shouldStop: boolean }>
  */
 async function scanPageActivities(
   rule: RuleConfig,
+  currentPage: number,
   maxRetries: number = 3
 ): Promise<{ activities: Activity[]; shouldStop: boolean }> {
+  // 优先从缓存获取数据
+  const cachedData = getCachedPageData(currentPage);
+  if (cachedData) {
+    console.log(`[PreviewEngine] 使用缓存数据：第 ${currentPage} 页 (${cachedData.activities.length} 个活动)`);
+    const shouldStop = shouldStopPaging(cachedData.activities, rule);
+    return { activities: cachedData.activities, shouldStop };
+  }
+
+  // 缓存未命中，等待 API 响应
+  console.log(`[PreviewEngine] 缓存未命中，等待 API 响应：第 ${currentPage} 页`);
+  
   let retryCount = 0;
   let lastError: Error | null = null;
 
   while (retryCount < maxRetries) {
     try {
-      console.log(`[PreviewEngine] Scanning page ${getCurrentPage()}, attempt ${retryCount + 1}`);
+      console.log(`[PreviewEngine] Scanning page ${currentPage}, attempt ${retryCount + 1}`);
 
       // 等待 API 响应
       const apiResponse = await waitForNextResponse();
@@ -123,10 +138,7 @@ export async function runPreview(config: PreviewConfig): Promise<PreviewResult> 
   let errorMessage: string | undefined;
 
   try {
-    // 1. 初始化 API 监听器
-    initApiListener();
-
-    // 2. 准备页面（回到第一页 + 时间排序）
+    // 1. 准备页面（回到第一页 + 时间排序）
     console.log('[PreviewEngine] Preparing page...');
     const prepResult = await preparePageForExecution();
 
@@ -134,8 +146,10 @@ export async function runPreview(config: PreviewConfig): Promise<PreviewResult> 
       throw new Error(`Page preparation failed: ${prepResult.errors.join(', ')}`);
     }
 
-    // 3. 开始扫描第一页
+    // 2. 开始扫描第一页
     console.log('[PreviewEngine] Starting page scan...');
+    console.log('[PreviewEngine] API 监听器已在全局初始化，将优先使用缓存数据');
+    
     let shouldContinue = true;
     let consecutiveErrors = 0;
 
@@ -154,8 +168,8 @@ export async function runPreview(config: PreviewConfig): Promise<PreviewResult> 
       }
 
       try {
-        // 扫描当前页
-        const { activities, shouldStop } = await scanPageActivities(rule, maxRetries);
+        // 扫描当前页（优先使用缓存）
+        const { activities, shouldStop } = await scanPageActivities(rule, currentPage, maxRetries);
 
         // 过滤匹配的活动
         const matched = activities.filter(activity => evaluateRule(rule, activity));
@@ -214,14 +228,13 @@ export async function runPreview(config: PreviewConfig): Promise<PreviewResult> 
       }
     }
 
-    // 4. 完成扫描
+    // 3. 完成扫描
     console.log(
       `[PreviewEngine] Scan completed: ${matchedActivities.length}/${totalScanned} activities matched`
     );
 
-    // 停止监听
-    stopListening();
-
+    // 注意：监听器持续运行，无需停止
+    
     // 最终进度报告
     if (onProgress) {
       onProgress({
@@ -244,9 +257,8 @@ export async function runPreview(config: PreviewConfig): Promise<PreviewResult> 
   } catch (error) {
     console.error('[PreviewEngine] Preview scan failed:', error);
 
-    // 停止监听
-    stopListening();
-
+    // 注意：监听器持续运行，无需停止
+    
     errorMessage = `Preview failed: ${(error as Error).message}`;
 
     // 报告错误

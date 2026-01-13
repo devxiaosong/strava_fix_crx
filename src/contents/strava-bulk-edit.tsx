@@ -1,8 +1,9 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import type { PlasmoCSConfig, PlasmoGetInlineAnchor, PlasmoGetStyle } from "plasmo"
 import { ConfigProvider } from "antd"
 import { BulkEditModal } from "~components/bulk-edit/BulkEditModal"
 import { SELECTORS } from "~/config/selectors"
+import { initApiListener, debugCache } from "~/core/apiListener"
 
 // Import Ant Design styles
 import antdStyles from "data-text:antd/dist/reset.css"
@@ -146,6 +147,27 @@ export const getShadowHostId = () => "strava-bulk-edit-extension"
 // Main component
 const StravaBulkEditContent = () => {
   const [bulkEditOpen, setBulkEditOpen] = useState(false)
+
+  // 在组件挂载时初始化 API 监听器
+  useEffect(() => {
+    console.log('[StravaBulkEdit] 初始化 API 监听器...')
+    
+    // 立即安装监听器，开始拦截所有 API 请求
+    initApiListener()
+    
+    console.log('[StravaBulkEdit] API 监听器已启动，将自动缓存所有 API 响应')
+    
+    // 5秒后打印缓存调试信息
+    const debugTimer = setTimeout(() => {
+      debugCache()
+    }, 5000)
+
+    // 清理函数（可选，因为监听器设计为持续运行）
+    return () => {
+      clearTimeout(debugTimer)
+      console.log('[StravaBulkEdit] 组件卸载（监听器继续运行）')
+    }
+  }, [])
 
   return (
     <ConfigProvider>

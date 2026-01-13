@@ -87,11 +87,6 @@ export const PAGINATION_SELECTORS = {
   PREV_PAGE: "//button[contains(@class, 'previous_page')]",
   
   /**
-   * 第一页按钮
-   */
-  FIRST_PAGE: "//button[contains(@class, 'first_page')] | //*[contains(@class, 'pagination')]//*[contains(@class, 'first')]",
-  
-  /**
    * 最后一页按钮
    */
   LAST_PAGE: "//button[contains(@class, 'last_page')] | //*[contains(@class, 'pagination')]//*[contains(@class, 'last')]",
@@ -100,7 +95,7 @@ export const PAGINATION_SELECTORS = {
    * 当前页码高亮元素
    * 用于检测翻页是否完成
    */
-  CURRENT_PAGE: "//*[contains(@class, 'pagination')]//*[contains(@class, 'active') or contains(@class, 'current')]",
+  CURRENT_PAGE: "//*[contains(@class, 'pagination')]//span[contains(@class, 'pages')]",
 } as const
 
 /**
@@ -111,25 +106,16 @@ export const SORT_SELECTORS = {
   /**
    * 日期排序按钮
    */
-  SORT_BY_DATE: "//button[@data-sort='date'] | //*[contains(@class, 'sort-date')]",
+  SORT_BY_DATE: "//div[@class='search-results-container']//th[contains(@class,'col-date')]",
+  SORT_BUTTON: "//div[@class='search-results-container']//th[contains(@class,'col-date')]/button",
   
   /**
    * 排序状态 CSS 类名
    */
   SORT_CLASSES: {
-    DESC: 'desc',
-    DESCENDING: 'descending',
-  },
-  
-  /**
-   * 排序 ARIA 属性名
-   */
-  SORT_ARIA_ATTR: 'aria-sort',
-  
-  /**
-   * 降序排序的 ARIA 属性值
-   */
-  SORT_ARIA_DESCENDING: 'descending',
+    DESC: 'desc'
+  }
+
 } as const
 
 /**

@@ -1,11 +1,17 @@
 /**
  * API 监听器
  * 负责拦截和监听 Strava 的 API 请求，获取活动数据
+ * 
+ * 新特性：
+ * - 全局初始化，页面加载时就开始拦截
+ * - 自动缓存所有 API 响应，解决"第一页问题"
+ * - 无需手动卸载，持续运行直到页面关闭
  */
 
 import type { Activity } from '~/types/activity';
 import { CURRENT_DELAYS } from '~/config/delays';
 import { isValidApiResponse } from '~/utils/validator';
+import { apiCache } from '~/core/apiCache';
 
 /**
  * API响应回调函数类型
@@ -98,6 +104,10 @@ function parseApiResponse(responseData: any): { activities: Activity[]; pageInfo
  * @param pageInfo 页面信息
  */
 function triggerCallbacks(activities: Activity[], pageInfo: PageInfo): void {
+  // 自动缓存数据（无论是否有回调监听）
+  apiCache.set(pageInfo.page, activities, pageInfo.perPage, pageInfo.total);
+
+  // 触发所有注册的回调
   listenerState.callbacks.forEach(callback => {
     try {
       callback(activities, pageInfo);
@@ -142,6 +152,12 @@ function interceptFetch(): void {
 
           const { activities, pageInfo } = parseApiResponse(data);
           
+          // 自动缓存数据（即使没有激活监听）
+          if (activities.length > 0) {
+            apiCache.set(pageInfo.page, activities, pageInfo.perPage, pageInfo.total);
+          }
+          
+          // 如果有监听器，触发回调
           if (listenerState.isListening && activities.length > 0) {
             triggerCallbacks(activities, pageInfo);
           }
@@ -200,6 +216,12 @@ function interceptXHR(): void {
 
               const { activities, pageInfo } = parseApiResponse(data);
               
+              // 自动缓存数据（即使没有激活监听）
+              if (activities.length > 0) {
+                apiCache.set(pageInfo.page, activities, pageInfo.perPage, pageInfo.total);
+              }
+              
+              // 如果有监听器，触发回调
               if (listenerState.isListening && activities.length > 0) {
                 triggerCallbacks(activities, pageInfo);
               }
@@ -226,6 +248,12 @@ function interceptXHR(): void {
 
               const { activities, pageInfo } = parseApiResponse(data);
               
+              // 自动缓存数据（即使没有激活监听）
+              if (activities.length > 0) {
+                apiCache.set(pageInfo.page, activities, pageInfo.perPage, pageInfo.total);
+              }
+              
+              // 如果有监听器，触发回调
               if (listenerState.isListening && activities.length > 0) {
                 triggerCallbacks(activities, pageInfo);
               }
@@ -371,15 +399,75 @@ export function getActivitiesFromLastResponse(): Activity[] {
 }
 
 /**
- * 手动触发 DOM 操作以触发 API 请求（需要与 pageManager 配合）
- * 这个函数本身不在这里实现，而是由 pageManager 提供
- * 这里只是记录说明
+ * 从缓存获取指定页的数据
+ * @param page 页码
+ * @returns PageData | null
+ */
+export function getCachedPageData(page: number) {
+  return apiCache.get(page);
+}
+
+/**
+ * 检查指定页是否已缓存
+ * @param page 页码
+ * @returns boolean
+ */
+export function hasCachedPage(page: number): boolean {
+  return apiCache.has(page);
+}
+
+/**
+ * 获取所有已缓存的页码
+ * @returns number[]
+ */
+export function getCachedPages(): number[] {
+  return apiCache.getCachedPages();
+}
+
+/**
+ * 清空 API 缓存
+ */
+export function clearCache(): void {
+  apiCache.clear();
+}
+
+/**
+ * 获取缓存统计信息
+ */
+export function getCacheStats() {
+  return apiCache.getStats();
+}
+
+/**
+ * 打印缓存调试信息
+ */
+export function debugCache(): void {
+  apiCache.debug();
+}
+
+/**
+ * 新的工作机制说明：
  * 
- * 使用示例：
- * 1. initApiListener() - 初始化监听器
- * 2. startListening(callback) - 开始监听
- * 3. 通过 pageManager.goToNextPage() 触发翻页
- * 4. callback 会被自动调用，接收活动数据
- * 5. stopListening() - 停止监听
+ * 1. Content Script 初始化时调用 initApiListener()
+ *    - 监听器立即开始拦截所有 API 请求
+ *    - 自动缓存所有响应数据
+ *    - 持续运行直到页面关闭
+ * 
+ * 2. 用户点击"预览"时：
+ *    - 检查第一页是否已缓存 (hasCachedPage(1))
+ *    - 如果已缓存，直接使用 (getCachedPageData(1))
+ *    - 如果未缓存，等待 API 响应
+ *    - 继续翻页扫描其他页面
+ * 
+ * 3. 无需手动卸载监听器
+ *    - 监听器全程运行
+ *    - 自动管理缓存过期
+ *    - 多次预览可复用缓存
+ * 
+ * 优势：
+ * - ✅ 完美解决"第一页问题"
+ * - ✅ 用户体验无感知
+ * - ✅ 支持多次预览，缓存加速
+ * - ✅ 代码更简洁，无需反复安装/卸载
  */
 

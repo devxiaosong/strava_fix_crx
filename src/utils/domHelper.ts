@@ -23,7 +23,17 @@ export function findElement<T extends HTMLElement = HTMLElement>(
       XPathResult.FIRST_ORDERED_NODE_TYPE,
       null
     );
-    return result.singleNodeValue as T | null;
+    const element = result.singleNodeValue as T | null;
+    
+    if (element) {
+      console.log(`[song] ✅ Success: Found element with XPath: ${xpath}`);
+    } else {
+      console.log(`[song] ❌ Failed: Element not found with XPath: ${xpath}`);
+      console.log(`[song] 📍 Call stack:`);
+      console.trace();
+    }
+    
+    return element;
   } catch (error) {
     console.error(`[DOM] XPath query failed: ${xpath}`, error);
     return null;

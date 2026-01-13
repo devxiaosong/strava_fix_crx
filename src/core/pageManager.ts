@@ -75,9 +75,44 @@ export function getCurrentPage(): number {
   }
 
   const pageText = currentPageElement.textContent?.trim();
-  const pageNumber = pageText ? parseInt(pageText, 10) : 1;
+  
+  console.log('song pageText:' + pageText)
 
-  return isNaN(pageNumber) ? 1 : pageNumber;
+  if (!pageText) {
+    return 1;
+  }
+
+  // 处理范围格式："1-20 of 41", "21-40 of 41", "41-41 of 41"
+  const rangeMatch = pageText.match(/^(\d+)-(\d+)\s+of\s+(\d+)$/);
+  if (rangeMatch) {
+    const startItem = parseInt(rangeMatch[1], 10);
+    const endItem = parseInt(rangeMatch[2], 10);
+    const totalItems = parseInt(rangeMatch[3], 10);
+    
+    console.log(`[PageManager] Detected range format: ${pageText} (start: ${startItem}, end: ${endItem}, total: ${totalItems})`);
+    
+    // 计算每页数量（从第一页推断，通常第一页是满的）
+    // 如果是第一页，直接用 endItem - startItem + 1
+    // 否则假设每页20条（Strava 的默认值）
+    const ITEMS_PER_PAGE = 20; // Strava 每页默认显示20个活动
+    
+    // 根据起始位置计算页码
+    // 例如：startItem = 1 → 第1页, startItem = 21 → 第2页, startItem = 41 → 第3页
+    const pageNumber = Math.floor((startItem - 1) / ITEMS_PER_PAGE) + 1;
+    
+    console.log(`[PageManager] Calculated page number: ${pageNumber} (assuming ${ITEMS_PER_PAGE} items per page)`);
+    return pageNumber;
+  }
+
+  // 处理简单数字格式："1", "2", "3"
+  const pageNumber = parseInt(pageText, 10);
+  
+  if (isNaN(pageNumber)) {
+    console.warn(`[PageManager] Cannot parse page number from: "${pageText}", assuming page 1`);
+    return 1;
+  }
+
+  return pageNumber;
 }
 
 /**
@@ -180,37 +215,41 @@ export async function goToFirstPage(): Promise<boolean> {
     console.log('[PageManager] Already on first page');
     return true;
   }
+  
+  // 直接使用日期排序按钮回到第一页
+  // 原理：点击排序会重新加载数据，默认从第一页开始
+  const sortButton = findElement<HTMLButtonElement>(SELECTORS.SORT.SORT_BUTTON);
 
-  const firstPageButton = findElement<HTMLButtonElement>(SELECTORS.PAGINATION.FIRST_PAGE);
-
-  if (!firstPageButton) {
-    console.warn('[PageManager] First page button not found, trying previous page repeatedly');
-    return await goToFirstPageByPrevious();
-  }
-
-  if (!isElementInteractive(firstPageButton)) {
-    console.warn('[PageManager] First page button is not interactive');
+  if (!sortButton) {
+    console.error('[PageManager] Date sort button not found');
     return false;
   }
 
-  // 点击第一页按钮
-  const clicked = await clickElement(firstPageButton, CURRENT_DELAYS.PAGE_LOAD);
+  if (!isElementInteractive(sortButton)) {
+    console.error('[PageManager] Date sort button is not interactive');
+    return false;
+  }
+
+  console.log('[PageManager] Clicking date sort button to go to first page...');
+  
+  // 点击日期排序按钮
+  const clicked = await clickElement(sortButton, CURRENT_DELAYS.PAGE_LOAD);
   
   if (!clicked) {
-    console.error('[PageManager] Failed to click first page button');
+    console.error('[PageManager] Failed to click date sort button');
     return false;
   }
 
   // 等待页面加载
   await waitForPageLoad();
 
-  // 验证是否在第一页
+  // 最终验证是否在第一页
   const success = isOnFirstPage();
   
   if (success) {
-    console.log('[PageManager] Successfully navigated to first page');
+    console.log('[PageManager] Successfully navigated to first page via date sort');
   } else {
-    console.warn('[PageManager] Failed to reach first page');
+    console.warn('[PageManager] Failed to reach first page, current page:', getCurrentPage());
   }
 
   return success;
@@ -280,9 +319,7 @@ export function isTimeSortedDescending(): boolean {
 
   // 检查是否有降序排序的指示（通常是特定的class或aria属性）
   const isDescending =
-    sortButton.classList.contains(SELECTORS.SORT.SORT_CLASSES.DESC) ||
-    sortButton.classList.contains(SELECTORS.SORT.SORT_CLASSES.DESCENDING) ||
-    sortButton.getAttribute(SELECTORS.SORT.SORT_ARIA_ATTR) === SELECTORS.SORT.SORT_ARIA_DESCENDING;
+    sortButton.classList.contains(SELECTORS.SORT.SORT_CLASSES.DESC);
 
   return isDescending;
 }
@@ -294,7 +331,7 @@ export function isTimeSortedDescending(): boolean {
 export async function sortByTimeDescending(): Promise<boolean> {
   console.log('[PageManager] Attempting to sort by time (descending)');
 
-  const sortButton = findElement<HTMLButtonElement>(SELECTORS.SORT.SORT_BY_DATE);
+  const sortButton = findElement<HTMLButtonElement>(SELECTORS.SORT.SORT_BUTTON);
 
   if (!sortButton) {
     console.error('[PageManager] Sort by date button not found');
