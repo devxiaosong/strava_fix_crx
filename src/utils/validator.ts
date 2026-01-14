@@ -27,34 +27,28 @@ export function isValidAthleteId(athleteId: string | null | undefined): boolean 
  * @param activityId 活动ID
  * @returns boolean
  */
-export function isValidActivityId(activityId: string | null | undefined): boolean {
+export function isValidActivityId(activityId: string | number | null | undefined): boolean {
   if (!activityId) return false;
-  // Strava 活动ID通常是数字字符串
+  // 支持数字或数字字符串
+  if (typeof activityId === 'number') return activityId > 0;
   return /^\d+$/.test(activityId);
 }
 
 /**
  * 验证日期范围是否有效
- * @param startDate 开始日期（时间戳或日期字符串）
- * @param endDate 结束日期（时间戳或日期字符串）
+ * @param startDate 开始日期（字符串）
+ * @param endDate 结束日期（字符串）
  * @returns boolean
  */
 export function isValidDateRange(
-  startDate: number | string | Date | null | undefined,
-  endDate: number | string | Date | null | undefined
+  startDate: string | null | undefined,
+  endDate: string | null | undefined
 ): boolean {
   if (!startDate || !endDate) return false;
+  if (typeof startDate !== 'string' || typeof endDate !== 'string') return false;
 
-  const start = startDate instanceof Date 
-    ? startDate.getTime() 
-    : typeof startDate === 'number' 
-      ? startDate 
-      : new Date(startDate).getTime();
-  const end = endDate instanceof Date 
-    ? endDate.getTime() 
-    : typeof endDate === 'number' 
-      ? endDate 
-      : new Date(endDate).getTime();
+  const start = new Date(startDate).getTime();
+  const end = new Date(endDate).getTime();
 
   // 检查日期是否有效
   if (isNaN(start) || isNaN(end)) return false;
@@ -98,13 +92,20 @@ export function isValidCondition(condition: ConditionConfig): boolean {
   // 根据类型验证值
   switch (condition.type) {
     case 'sportType':
-      // 必须有值且为非空字符串
-      return typeof condition.value === 'string' && condition.value.length > 0;
+      // 必须是非空字符串数组
+      return Array.isArray(condition.value) && 
+             condition.value.length > 0 && 
+             condition.value.every(v => typeof v === 'string' && v.length > 0);
 
     case 'dateRange':
-      // 必须有 start 和 end，且是有效的日期范围
-      if (!condition.value || typeof condition.value !== 'object') return false;
-      return isValidDateRange(condition.value.start, condition.value.end);
+      // 必须是日期范围对象数组
+      return Array.isArray(condition.value) && 
+             condition.value.length > 0 && 
+             condition.value.every(range => 
+               range && 
+               typeof range === 'object' && 
+               isValidDateRange(range.start, range.end)
+             );
 
     case 'distanceRange':
       // 必须有 min 和 max，且是有效的距离范围
@@ -112,8 +113,10 @@ export function isValidCondition(condition: ConditionConfig): boolean {
       return isValidDistanceRange(condition.value.min, condition.value.max);
 
     case 'rideType':
-      // 必须有值且为非空字符串
-      return typeof condition.value === 'string' && condition.value.length > 0;
+      // 必须是非空字符串数组
+      return Array.isArray(condition.value) && 
+             condition.value.length > 0 && 
+             condition.value.every(v => typeof v === 'string' && v.length > 0);
 
     default:
       console.warn('[Validator] Unknown condition type:', condition.type);

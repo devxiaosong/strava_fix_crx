@@ -32,15 +32,19 @@ export function evaluateCondition(condition: ConditionConfig, activity: Activity
 
   switch (condition.type) {
     case 'sportType':
+      console.log('[RuleEngine] Evaluating sportType:', condition.value, 'Activity:', activity.sport_type);
       return evaluateSportType(condition.value, activity);
 
     case 'dateRange':
+      console.log('[RuleEngine] Evaluating dateRange:', condition.value, 'Activity start_time:', activity.start_time);
       return evaluateDateRange(condition.value, activity);
 
     case 'distanceRange':
+      console.log('[RuleEngine] Evaluating distanceRange:', condition.value, 'Activity distance_raw:', activity.distance_raw);
       return evaluateDistanceRange(condition.value, activity);
 
     case 'rideType':
+      console.log('[RuleEngine] Evaluating rideType:', condition.value, 'Activity:', activity.ride_type);
       return evaluateRideType(condition.value, activity);
 
     default:
@@ -51,38 +55,38 @@ export function evaluateCondition(condition: ConditionConfig, activity: Activity
 
 /**
  * 评估运动类型条件
- * @param sportType 期望的运动类型
+ * @param sportTypes 期望的运动类型数组
  * @param activity 活动对象
  * @returns boolean
  */
-function evaluateSportType(sportType: string, activity: Activity): boolean {
-  return activity.sport_type === sportType;
+function evaluateSportType(sportTypes: string[], activity: Activity): boolean {
+  return sportTypes.includes(activity.sport_type);
 }
 
 /**
  * 评估日期范围条件
- * @param dateRange { start: number | string, end: number | string }
+ * @param dateRanges 日期范围数组（字符串格式）
  * @param activity 活动对象
  * @returns boolean
  */
 function evaluateDateRange(
-  dateRange: { start: number | string; end: number | string },
+  dateRanges: Array<{ start: string; end: string }>,
   activity: Activity
 ): boolean {
-  if (!activity.date) {
+  // 使用 start_time 字段
+  if (!activity.start_time) {
     return false;
   }
 
-  const activityTime = new Date(activity.date).getTime();
-  const startTime = typeof dateRange.start === 'number'
-    ? dateRange.start
-    : new Date(dateRange.start).getTime();
-  const endTime = typeof dateRange.end === 'number'
-    ? dateRange.end
-    : new Date(dateRange.end).getTime();
+  const activityTime = new Date(activity.start_time).getTime();
 
-  // 检查活动时间是否在范围内
-  return activityTime >= startTime && activityTime <= endTime;
+  // 只要满足任一范围即可（OR 逻辑）
+  return dateRanges.some(range => {
+    const startTime = new Date(range.start).getTime();
+    const endTime = new Date(range.end).getTime();
+    
+    return activityTime >= startTime && activityTime <= endTime;
+  });
 }
 
 /**
@@ -95,12 +99,13 @@ function evaluateDistanceRange(
   distanceRange: { min: number; max: number },
   activity: Activity
 ): boolean {
-  if (activity.distance === null || activity.distance === undefined) {
+  // 使用 distance_raw 字段（米）
+  if (activity.distance_raw === null || activity.distance_raw === undefined) {
     return false;
   }
 
   // 将米转换为公里
-  const distanceInKm = activity.distance / 1000;
+  const distanceInKm = activity.distance_raw / 1000;
 
   // 检查距离是否在范围内
   return distanceInKm >= distanceRange.min && distanceInKm <= distanceRange.max;
@@ -108,13 +113,12 @@ function evaluateDistanceRange(
 
 /**
  * 评估骑行类型条件
- * @param rideType 期望的骑行类型
+ * @param rideTypes 期望的骑行类型数组
  * @param activity 活动对象
  * @returns boolean
  */
-function evaluateRideType(rideType: string, activity: Activity): boolean {
-  // 检查活动的骑行类型
-  return activity.ride_type === rideType;
+function evaluateRideType(rideTypes: string[], activity: Activity): boolean {
+  return rideTypes.includes(activity.ride_type);
 }
 
 /**
@@ -148,6 +152,7 @@ export function evaluateRule(rule: RuleConfig, activity: Activity): boolean {
   // 评估每个启用的条件
   for (const condition of enabledConditions) {
     if (!evaluateCondition(condition, activity)) {
+      console.log('[RuleEngine] Condition not matched:', JSON.stringify(condition), 'Activity:', activity);
       return false;
     }
   }
@@ -199,20 +204,22 @@ export function compileRule(filterConfig: FilterConfig): RuleConfig {
     });
   }
 
-  // 日期范围条件
+  // 日期范围条件 - 始终使用数组格式，支持多个范围（OR 逻辑）
   if (filterConfig.dateRanges && filterConfig.dateRanges.length > 0) {
-    filterConfig.dateRanges.forEach(dateRange => {
-      if (dateRange.start && dateRange.end) {
-    conditions.push({
-      type: 'dateRange',
-      enabled: true,
-      value: {
-            start: dateRange.start,
-            end: dateRange.end,
-      },
-        });
-      }
-    });
+    const validRanges = filterConfig.dateRanges
+      .filter(dateRange => dateRange.start && dateRange.end)
+      .map(dateRange => ({
+        start: dateRange.start,
+        end: dateRange.end,
+      }));
+    
+    if (validRanges.length > 0) {
+      conditions.push({
+        type: 'dateRange',
+        enabled: true,
+        value: validRanges, // 始终使用数组
+      });
+    }
   }
 
   // 距离范围条件
@@ -259,18 +266,20 @@ export function shouldStopPaging(activities: Activity[], rule: RuleConfig): bool
     return false;
   }
 
-  const { start } = dateCondition.value;
-  const startTime = typeof start === 'number' ? start : new Date(start).getTime();
+  // 获取最早的开始时间（日期范围数组，字符串格式）
+  const earliestStartTime = Math.min(
+    ...dateCondition.value.map(range => new Date(range.start).getTime())
+  );
 
-  // 检查当前页的所有活动是否都早于开始时间
+  // 检查当前页的所有活动是否都早于最早的开始时间
   const allBeforeRange = activities.every(activity => {
-    if (!activity.date) return false;
-    const activityTime = new Date(activity.date).getTime();
-    return activityTime < startTime;
+    if (!activity.start_time) return false;
+    const activityTime = new Date(activity.start_time).getTime();
+    return activityTime < earliestStartTime;
   });
 
   if (allBeforeRange && activities.length > 0) {
-    console.log('[RuleEngine] All activities on page are before date range, stopping pagination');
+    console.log('[RuleEngine] All activities on page are before date range(s), stopping pagination');
     return true;
   }
 
@@ -360,13 +369,19 @@ export function getRuleSummary(rule: RuleConfig): string {
   const summaries = enabledConditions.map(c => {
     switch (c.type) {
       case 'sportType':
-        return `Sport: ${c.value}`;
+        return `Sport: ${c.value.join(', ')}`;
       case 'dateRange':
-        return `Date: ${new Date(c.value.start).toLocaleDateString()} - ${new Date(c.value.end).toLocaleDateString()}`;
+        // 日期范围数组
+        const ranges = c.value.map(range => 
+          `${new Date(range.start).toLocaleDateString()} - ${new Date(range.end).toLocaleDateString()}`
+        );
+        return ranges.length === 1 
+          ? `Date: ${ranges[0]}` 
+          : `Date: (${ranges.join(' OR ')})`;
       case 'distanceRange':
         return `Distance: ${c.value.min}-${c.value.max} km`;
       case 'rideType':
-        return `Ride Type: ${c.value}`;
+        return `Ride Type: ${c.value.join(', ')}`;
       default:
         return `${c.type}: ${JSON.stringify(c.value)}`;
     }

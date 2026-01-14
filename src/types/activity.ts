@@ -7,17 +7,28 @@ export type RideType = 'Race' | 'Workout' | 'Commute' | 'Gravel' | 'MountainBike
 export type PrivacyLevel = 'everyone' | 'followers_only' | 'only_me';
 
 export interface Activity {
-  id: string;
-  sport_type: SportType;
+  id: number | string;
+  sport_type: SportType | string;
   name: string;
-  date: string;
-  distance: number; // in km
-  moving_time: number; // in seconds
-  elapsed_time: number; // in seconds
-  total_elevation_gain: number; // in meters
-  privacy: PrivacyLevel;
-  gear_id?: string;
-  ride_type?: RideType;
+  // API 返回的字段名
+  start_time: string; // ISO 时间字符串，如 "2025-11-01T01:00:00+0000"
+  start_date?: string; // 格式化日期，如 "Sat, 11/1/2025"
+  start_date_local_raw?: number; // 本地时间戳（秒）
+  distance?: string; // 格式化距离字符串（带单位）
+  distance_raw: number; // 原始距离（米）
+  moving_time?: string; // 格式化时间字符串
+  moving_time_raw: number; // 原始移动时间（秒）
+  elapsed_time?: string; // 格式化时间字符串
+  elapsed_time_raw: number; // 原始总时间（秒）
+  elevation_gain?: string; // 格式化爬升
+  elevation_gain_raw?: number; // 原始爬升（米）
+  visibility: PrivacyLevel | string; // 隐私级别
+  bike_id?: string | null; // 自行车ID
+  athlete_gear_id?: string | null; // 装备ID
+  workout_type?: number; // 训练类型
+  ride_type?: RideType | string; // 骑行类型
+  trainer?: boolean; // 是否室内训练
+  commute?: boolean | null; // 是否通勤
 }
 
 export interface Gear {
@@ -59,8 +70,8 @@ export interface ScenarioConfig {
 
 export interface DateRange {
   id: string;
-  start: Date | null;
-  end: Date | null;
+  start: string | null;
+  end: string | null;
 }
 
 export interface FilterConfig {
