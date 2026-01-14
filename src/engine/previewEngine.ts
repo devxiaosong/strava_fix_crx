@@ -210,6 +210,15 @@ export async function runPreview(config: PreviewConfig): Promise<PreviewResult> 
         consecutiveErrors++;
         console.error(`[PreviewEngine] Error scanning page ${currentPage}:`, error);
 
+        // 新增：如果是第一页失败，直接终止
+        if (currentPage === 1) {
+          console.error('[PreviewEngine] First page scan failed, aborting...');
+          hasError = true;
+          errorMessage = `Failed to scan first page: ${(error as Error).message}`;
+          shouldContinue = false;
+          break;
+        }
+          
         if (stopOnError || consecutiveErrors >= 3) {
         hasError = true;
         errorMessage = `Scan failed: ${(error as Error).message}`;

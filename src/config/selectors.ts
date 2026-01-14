@@ -87,15 +87,15 @@ export const PAGINATION_SELECTORS = {
   PREV_PAGE: "//button[contains(@class, 'previous_page')]",
   
   /**
-   * 最后一页按钮
-   */
-  LAST_PAGE: "//button[contains(@class, 'last_page')] | //*[contains(@class, 'pagination')]//*[contains(@class, 'last')]",
-  
-  /**
    * 当前页码高亮元素
    * 用于检测翻页是否完成
    */
-  CURRENT_PAGE: "//*[contains(@class, 'pagination')]//span[contains(@class, 'pages')]",
+  PAGE_INDEX: "//*[contains(@class, 'pagination')]//span[contains(@class, 'pages')]",
+  
+  /**
+   * Strava 每页默认显示的活动数量
+   */
+  ITEMS_PER_PAGE: 20,
 } as const
 
 /**

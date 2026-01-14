@@ -240,6 +240,7 @@ export function isPageLoaded(): boolean {
   return document.readyState === 'complete';
 }
 
+
 /**
  * 验证元素是否可见
  * @param element DOM元素

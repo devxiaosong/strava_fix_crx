@@ -99,8 +99,8 @@ export const getStyle: PlasmoGetStyle = () => {
 // Configure Content Script
 export const config: PlasmoCSConfig = {
   matches: ["https://www.strava.com/athlete/training*"],
-  run_at: "document_end"
-  // Removed world: "MAIN" to use isolated extension environment, avoiding importScripts error
+  run_at: "document_end",
+  world: "MAIN"  // Removed world: "MAIN" to use isolated extension environment, avoiding importScripts error
 }
 
 // Define mount position - after search panel

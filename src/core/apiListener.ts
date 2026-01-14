@@ -123,6 +123,7 @@ function triggerCallbacks(activities: Activity[], pageInfo: PageInfo): void {
 function interceptFetch(): void {
   if (!originalFetch) {
     originalFetch = window.fetch;
+    console.log('[ApiListener] 🔧 Saving original fetch:', typeof originalFetch);
   }
 
   window.fetch = async function (...args: Parameters<typeof fetch>): Promise<Response> {
@@ -133,44 +134,57 @@ function interceptFetch(): void {
         ? resource.url 
         : resource.toString();
 
+    console.log('[ApiListener] 🌐 Fetch request detected:', url);
+
     // 调用原始 fetch
     const response = await originalFetch.apply(this, args);
 
     // 检查是否是训练活动 API
     if (TRAINING_ACTIVITIES_API_PATTERN.test(url)) {
-      console.log('[ApiListener] Intercepted fetch request:', url);
+      console.log('[ApiListener] ✅ Intercepted training activities API:', url);
+      console.log('[ApiListener] 📊 Response status:', response.status);
 
       // 克隆响应以便我们可以读取它
       const clonedResponse = response.clone();
 
       try {
         const data = await clonedResponse.json();
+        console.log('[ApiListener] 📦 Parsed JSON data:', data);
         
         if (isValidApiResponse(data)) {
+          console.log('[ApiListener] ✓ Valid API response');
           listenerState.lastResponse = data;
           listenerState.lastResponseTime = Date.now();
 
           const { activities, pageInfo } = parseApiResponse(data);
+          console.log(`[ApiListener] 🎯 Extracted ${activities.length} activities, page ${pageInfo.page}`);
           
           // 自动缓存数据（即使没有激活监听）
           if (activities.length > 0) {
             apiCache.set(pageInfo.page, activities, pageInfo.perPage, pageInfo.total);
+            console.log(`[ApiListener] 💾 Cached page ${pageInfo.page} with ${activities.length} activities`);
           }
           
           // 如果有监听器，触发回调
           if (listenerState.isListening && activities.length > 0) {
+            console.log(`[ApiListener] 📢 Triggering ${listenerState.callbacks.length} callbacks`);
             triggerCallbacks(activities, pageInfo);
+          } else {
+            console.log('[ApiListener] ⏸️ No active listeners, data cached only');
           }
+        } else {
+          console.warn('[ApiListener] ⚠️ Invalid API response format');
         }
       } catch (error) {
-        console.error('[ApiListener] Failed to parse fetch response:', error);
+        console.error('[ApiListener] ❌ Failed to parse fetch response:', error);
       }
     }
 
     return response;
   };
 
-  console.log('[ApiListener] Fetch interception enabled');
+  console.log('[ApiListener] ✅ Fetch interception enabled, window.fetch replaced');
+  console.log('[ApiListener] 🔍 Pattern to match:', TRAINING_ACTIVITIES_API_PATTERN);
 }
 
 /**
@@ -179,9 +193,11 @@ function interceptFetch(): void {
 function interceptXHR(): void {
   if (!originalXHROpen) {
     originalXHROpen = XMLHttpRequest.prototype.open;
+    console.log('[ApiListener] 🔧 Saving original XHR.open:', typeof originalXHROpen);
   }
   if (!originalXHRSend) {
     originalXHRSend = XMLHttpRequest.prototype.send;
+    console.log('[ApiListener] 🔧 Saving original XHR.send:', typeof originalXHRSend);
   }
 
   XMLHttpRequest.prototype.open = function (
@@ -191,6 +207,7 @@ function interceptXHR(): void {
   ): void {
     // @ts-ignore
     this._url = url.toString();
+    console.log('[ApiListener] 🌐 XHR open:', method, this._url);
     // @ts-ignore
     return originalXHROpen.apply(this, [method, url, ...rest]);
   };
@@ -200,35 +217,46 @@ function interceptXHR(): void {
     const url = this._url;
 
     if (url && TRAINING_ACTIVITIES_API_PATTERN.test(url)) {
-      console.log('[ApiListener] Intercepted XHR request:', url);
+      console.log('[ApiListener] ✅ Intercepted training activities XHR:', url);
+      console.log('[ApiListener] 📤 Request body:', body);
 
       const originalOnLoad = this.onload;
       const originalOnReadyStateChange = this.onreadystatechange;
 
       this.onload = function (event) {
         try {
+          console.log('[ApiListener] 📊 XHR onload, status:', this.status);
           if (this.status === 200) {
             const data = JSON.parse(this.responseText);
+            console.log('[ApiListener] 📦 XHR parsed JSON data:', data);
             
             if (isValidApiResponse(data)) {
+              console.log('[ApiListener] ✓ Valid XHR API response');
               listenerState.lastResponse = data;
               listenerState.lastResponseTime = Date.now();
 
               const { activities, pageInfo } = parseApiResponse(data);
+              console.log(`[ApiListener] 🎯 XHR extracted ${activities.length} activities, page ${pageInfo.page}`);
               
               // 自动缓存数据（即使没有激活监听）
               if (activities.length > 0) {
                 apiCache.set(pageInfo.page, activities, pageInfo.perPage, pageInfo.total);
+                console.log(`[ApiListener] 💾 XHR cached page ${pageInfo.page} with ${activities.length} activities`);
               }
               
               // 如果有监听器，触发回调
               if (listenerState.isListening && activities.length > 0) {
+                console.log(`[ApiListener] 📢 XHR triggering ${listenerState.callbacks.length} callbacks`);
                 triggerCallbacks(activities, pageInfo);
+              } else {
+                console.log('[ApiListener] ⏸️ XHR no active listeners, data cached only');
               }
+            } else {
+              console.warn('[ApiListener] ⚠️ Invalid XHR API response format');
             }
           }
         } catch (error) {
-          console.error('[ApiListener] Failed to parse XHR response:', error);
+          console.error('[ApiListener] ❌ Failed to parse XHR response:', error);
         }
 
         // 调用原始回调
@@ -238,28 +266,38 @@ function interceptXHR(): void {
       };
 
       this.onreadystatechange = function (event) {
+        console.log('[ApiListener] 📡 XHR readyState changed:', this.readyState);
         if (this.readyState === 4 && this.status === 200) {
           try {
             const data = JSON.parse(this.responseText);
+            console.log('[ApiListener] 📦 XHR onreadystatechange parsed JSON data:', data);
             
             if (isValidApiResponse(data)) {
+              console.log('[ApiListener] ✓ Valid XHR API response (onreadystatechange)');
               listenerState.lastResponse = data;
               listenerState.lastResponseTime = Date.now();
 
               const { activities, pageInfo } = parseApiResponse(data);
+              console.log(`[ApiListener] 🎯 XHR extracted ${activities.length} activities, page ${pageInfo.page} (onreadystatechange)`);
               
               // 自动缓存数据（即使没有激活监听）
               if (activities.length > 0) {
                 apiCache.set(pageInfo.page, activities, pageInfo.perPage, pageInfo.total);
+                console.log(`[ApiListener] 💾 XHR cached page ${pageInfo.page} with ${activities.length} activities (onreadystatechange)`);
               }
               
               // 如果有监听器，触发回调
               if (listenerState.isListening && activities.length > 0) {
+                console.log(`[ApiListener] 📢 XHR triggering ${listenerState.callbacks.length} callbacks (onreadystatechange)`);
                 triggerCallbacks(activities, pageInfo);
+              } else {
+                console.log('[ApiListener] ⏸️ XHR no active listeners, data cached only (onreadystatechange)');
               }
+            } else {
+              console.warn('[ApiListener] ⚠️ Invalid XHR API response format (onreadystatechange)');
             }
           } catch (error) {
-            console.error('[ApiListener] Failed to parse XHR response:', error);
+            console.error('[ApiListener] ❌ Failed to parse XHR response (onreadystatechange):', error);
           }
         }
 
@@ -273,22 +311,29 @@ function interceptXHR(): void {
     return originalXHRSend.apply(this, [body]);
   };
 
-  console.log('[ApiListener] XHR interception enabled');
+  console.log('[ApiListener] ✅ XHR interception enabled, XMLHttpRequest.prototype replaced');
+  console.log('[ApiListener] 🔍 Pattern to match:', TRAINING_ACTIVITIES_API_PATTERN);
 }
 
 /**
  * 初始化 API 监听器（拦截 fetch 和 XHR）
  */
 export function initApiListener(): void {
+  console.log('[ApiListener] 🚀 Initializing API listener...');
+  console.log('[ApiListener] 🔍 Current window object:', typeof window);
+  console.log('[ApiListener] 🔍 window.fetch type:', typeof window.fetch);
+  console.log('[ApiListener] 🔍 XMLHttpRequest type:', typeof XMLHttpRequest);
+  
   if (listenerState.isListening) {
-    console.warn('[ApiListener] Listener already initialized');
+    console.warn('[ApiListener] ⚠️ Listener already initialized');
     return;
   }
 
   interceptFetch();
   interceptXHR();
 
-  console.log('[ApiListener] API listener initialized');
+  console.log('[ApiListener] ✅ API listener initialized successfully');
+  console.log('[ApiListener] 🔍 Verifying fetch is replaced:', window.fetch.toString().includes('ApiListener'));
 }
 
 /**

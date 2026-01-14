@@ -9,7 +9,6 @@ import {
   findElement,
   findAllElements,
   clickElement,
-  elementExists,
 } from '~/utils/domHelper';
 import {
   isPageLoaded,
@@ -18,48 +17,56 @@ import {
 } from '~/utils/validator';
 
 /**
+ * 验证活动列表是否已加载就绪
+ * @returns boolean
+ */
+export function isActivityListReady(): boolean {  
+  const activityRows = findAllElements(SELECTORS.ACTIVITY.ROW);
+  return activityRows.length > 0;
+}
+
+/**
  * 等待页面加载完成
- * @param timeout 超时时间（毫秒）
+ * 分为两个阶段：
+ * 1. 等待页面基础加载完成（document.readyState === 'complete'）
+ * 2. 等待活动列表加载完成（最多10秒）
+ * 
+ * @param timeout 页面基础加载超时时间（毫秒）
  * @returns Promise<boolean> 是否加载成功
  */
 export async function waitForPageLoad(timeout: number = CURRENT_DELAYS.PAGE_LOAD): Promise<boolean> {
   const startTime = Date.now();
   
+  // 阶段1: 等待页面基础加载完成
   while (Date.now() - startTime < timeout) {
     if (isPageLoaded()) {
-      // 额外等待一段时间，确保DOM完全渲染
+      console.log('[PageManager] Page loaded, now waiting for activity list...');
+      break;
+    }
+    await delay(100);
+  }
+
+  if (!isPageLoaded()) {
+    console.warn('[PageManager] Page load timeout');
+    return false;
+  }
+
+  // 阶段2: 等待活动列表加载完成（最多10秒）
+  const LIST_LOAD_TIMEOUT = 10000;
+  const listStartTime = Date.now();
+  
+  while (Date.now() - listStartTime < LIST_LOAD_TIMEOUT) {
+    if (isActivityListReady()) {
+      // 额外等待一段时间，确保DOM完全渲染并稳定
       await delay(500);
+      console.log('[PageManager] Activity list loaded successfully');
       return true;
     }
     await delay(100);
   }
 
-  console.warn('[PageManager] Page load timeout');
+  console.warn('[PageManager] Activity list load timeout after 10 seconds');
   return false;
-}
-
-/**
- * 等待元素出现
- * @param selector CSS选择器
- * @param timeout 超时时间（毫秒）
- * @returns Promise<HTMLElement | null>
- */
-export async function waitForElement(
-  selector: string,
-  timeout: number = 5000
-): Promise<HTMLElement | null> {
-  const startTime = Date.now();
-  
-  while (Date.now() - startTime < timeout) {
-    const element = findElement(selector);
-    if (element) {
-      return element;
-    }
-    await delay(100);
-  }
-
-  console.warn('[PageManager] Element not found:', selector);
-  return null;
 }
 
 /**
@@ -67,7 +74,7 @@ export async function waitForElement(
  * @returns 当前页码，默认为1
  */
 export function getCurrentPage(): number {
-  const currentPageElement = findElement(SELECTORS.PAGINATION.CURRENT_PAGE);
+  const currentPageElement = findElement(SELECTORS.PAGINATION.PAGE_INDEX);
   
   if (!currentPageElement) {
     console.warn('[PageManager] Cannot find current page indicator, assuming page 1');
@@ -76,8 +83,6 @@ export function getCurrentPage(): number {
 
   const pageText = currentPageElement.textContent?.trim();
   
-  console.log('song pageText:' + pageText)
-
   if (!pageText) {
     return 1;
   }
@@ -91,16 +96,11 @@ export function getCurrentPage(): number {
     
     console.log(`[PageManager] Detected range format: ${pageText} (start: ${startItem}, end: ${endItem}, total: ${totalItems})`);
     
-    // 计算每页数量（从第一页推断，通常第一页是满的）
-    // 如果是第一页，直接用 endItem - startItem + 1
-    // 否则假设每页20条（Strava 的默认值）
-    const ITEMS_PER_PAGE = 20; // Strava 每页默认显示20个活动
-    
     // 根据起始位置计算页码
     // 例如：startItem = 1 → 第1页, startItem = 21 → 第2页, startItem = 41 → 第3页
-    const pageNumber = Math.floor((startItem - 1) / ITEMS_PER_PAGE) + 1;
+    const pageNumber = Math.floor((startItem - 1) / SELECTORS.PAGINATION.ITEMS_PER_PAGE) + 1;
     
-    console.log(`[PageManager] Calculated page number: ${pageNumber} (assuming ${ITEMS_PER_PAGE} items per page)`);
+    console.log(`[PageManager] Calculated page number: ${pageNumber} (assuming ${SELECTORS.PAGINATION.ITEMS_PER_PAGE} items per page)`);
     return pageNumber;
   }
 
@@ -113,25 +113,6 @@ export function getCurrentPage(): number {
   }
 
   return pageNumber;
-}
-
-/**
- * 获取总页数
- * @returns 总页数，如果无法确定则返回null
- */
-export function getTotalPages(): number | null {
-  // 尝试从分页元素中提取总页数
-  const lastPageButton = findElement(SELECTORS.PAGINATION.LAST_PAGE);
-  
-  if (!lastPageButton) {
-    console.warn('[PageManager] Cannot find last page button');
-    return null;
-  }
-
-  const pageText = lastPageButton.textContent?.trim();
-  const pageNumber = pageText ? parseInt(pageText, 10) : null;
-
-  return pageNumber && !isNaN(pageNumber) ? pageNumber : null;
 }
 
 /**
@@ -253,35 +234,6 @@ export async function goToFirstPage(): Promise<boolean> {
   }
 
   return success;
-}
-
-/**
- * 通过反复点击"上一页"按钮回到第一页（备用方法）
- * @param maxAttempts 最大尝试次数，防止无限循环
- * @returns Promise<boolean>
- */
-async function goToFirstPageByPrevious(maxAttempts: number = 20): Promise<boolean> {
-  let attempts = 0;
-
-  while (!isOnFirstPage() && attempts < maxAttempts) {
-    const prevButton = findElement<HTMLButtonElement>(SELECTORS.PAGINATION.PREV_PAGE);
-
-    if (!prevButton || !isElementInteractive(prevButton)) {
-      console.warn('[PageManager] Cannot go back further');
-      break;
-    }
-
-    const clicked = await clickElement(prevButton, CURRENT_DELAYS.PAGE_LOAD);
-    if (!clicked) {
-      console.error('[PageManager] Failed to click previous page button');
-      return false;
-    }
-
-    await waitForPageLoad();
-    attempts++;
-  }
-
-  return isOnFirstPage();
 }
 
 /**
@@ -425,25 +377,6 @@ export function extractActivityId(activityRow: HTMLElement): string | null {
 
   console.warn('[PageManager] Cannot extract activity ID from row', activityRow);
   return null;
-}
-
-/**
- * 获取当前页面的活动ID列表
- * @returns string[]
- */
-export function getPageActivityIds(): string[] {
-  const rows = getActivityRowElements();
-  const ids: string[] = [];
-
-  rows.forEach(row => {
-    const id = extractActivityId(row);
-    if (id) {
-      ids.push(id);
-    }
-  });
-
-  console.log(`[PageManager] Found ${ids.length} activities on current page`);
-  return ids;
 }
 
 /**

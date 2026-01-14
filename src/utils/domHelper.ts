@@ -3,7 +3,7 @@
  * 封装常用的 DOM 操作，提供统一的接口和错误处理
  */
 
-import { CURRENT_DELAYS, delay } from '~/config/delays';
+import { delay } from '~/config/delays';
 
 /**
  * 查找单个元素（使用 XPath）
@@ -24,7 +24,7 @@ export function findElement<T extends HTMLElement = HTMLElement>(
       null
     );
     const element = result.singleNodeValue as T | null;
-    
+
     if (element) {
       console.log(`[song] ✅ Success: Found element with XPath: ${xpath}`);
     } else {
@@ -32,7 +32,7 @@ export function findElement<T extends HTMLElement = HTMLElement>(
       console.log(`[song] 📍 Call stack:`);
       console.trace();
     }
-    
+
     return element;
   } catch (error) {
     console.error(`[DOM] XPath query failed: ${xpath}`, error);
@@ -86,13 +86,13 @@ export async function clickElement(
     console.warn('[DOM] Attempted to click a null element.');
     return false;
   }
-  
+
   element.click();
-  
+
   if (waitMs > 0) {
     await delay(waitMs);
   }
-  
+
   return true;
 }
 
@@ -111,11 +111,11 @@ export function setInputValue(
     console.warn('[DOM] Attempted to set value on a null element.');
     return false;
   }
-  
+
   element.value = value;
   element.dispatchEvent(new Event('input', { bubbles: true }));
   element.dispatchEvent(new Event('change', { bubbles: true }));
-  
+
   return true;
 }
 
@@ -143,7 +143,7 @@ export async function waitForElement(
   timeout: number = 5000
 ): Promise<HTMLElement | null> {
   const startTime = Date.now();
-  
+
   while (Date.now() - startTime < timeout) {
     const element = findElement<HTMLElement>(xpath);
     if (element) {
@@ -190,7 +190,7 @@ export function getElementText(
 /**
  * 验证 XPath 选择器是否有效
  * 可以在开发时用于测试选择器
- * 
+ *
  * @param xpath - 要验证的 XPath 选择器
  * @returns 选择器是否有效且有匹配元素
  */
@@ -215,7 +215,7 @@ export function validateSelector(xpath: string): boolean {
 /**
  * 批量验证 XPath 选择器组
  * 用于开发和调试
- * 
+ *
  * @param xpathGroup - XPath 选择器组对象
  * @returns 验证结果摘要
  */
@@ -229,7 +229,7 @@ export function validateSelectorGroup(xpathGroup: Record<string, string>): {
     valid: 0,
     invalid: [] as string[]
   };
-  
+
   for (const [key, xpath] of Object.entries(xpathGroup)) {
     results.total++;
     if (validateSelector(xpath)) {
@@ -238,19 +238,19 @@ export function validateSelectorGroup(xpathGroup: Record<string, string>): {
       results.invalid.push(`${key}: ${xpath}`);
     }
   }
-  
+
   console.log(`[XPath选择器组验证] ${results.valid}/${results.total} 有效`);
   if (results.invalid.length > 0) {
     console.warn('[无效XPath选择器]:', results.invalid);
   }
-  
+
   return results;
 }
 
 /**
  * XPath 查询工具函数：查询单个元素
  * （findElement 的别名，保持向后兼容）
- * 
+ *
  * @param xpath - XPath 表达式
  * @param contextNode - 上下文节点，默认为 document
  * @returns 找到的第一个元素，如果没有则返回 null
@@ -260,7 +260,7 @@ export const queryByXPath = findElement;
 /**
  * XPath 查询工具函数：查询所有匹配的元素
  * （findAllElements 的别名，保持向后兼容）
- * 
+ *
  * @param xpath - XPath 表达式
  * @param contextNode - 上下文节点，默认为 document
  * @returns 所有匹配的元素数组
