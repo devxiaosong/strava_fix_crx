@@ -262,11 +262,11 @@ async function processPageActivities(
       console.warn(`[ExecuteEngine] Cannot find DOM element for activity ${activity.id}`);
       failed++;
       failedDetails.push({
-        id: activity.id,
+        id: String(activity.id),
         name: activity.name,
         error: 'DOM element not found',
       });
-      await recordFailedUpdate(activity.id, activity.name, 'DOM element not found');
+      await recordFailedUpdate(String(activity.id), activity.name, 'DOM element not found');
       continue;
     }
 
@@ -303,11 +303,11 @@ async function processPageActivities(
           failed++;
           const errorMessage = (error as Error).message;
           failedDetails.push({
-            id: activity.id,
+            id: String(activity.id),
             name: activity.name,
             error: errorMessage,
           });
-          await recordFailedUpdate(activity.id, activity.name, errorMessage);
+          await recordFailedUpdate(String(activity.id), activity.name, errorMessage);
         } else {
           const retryDelay = getRetryDelay(retryCount);
           await delay(retryDelay);
@@ -359,9 +359,6 @@ export async function runExecution(config: ExecutionConfig): Promise<ExecutionRe
     }
 
     await startTask();
-
-    // 3. 初始化 API 监听器
-    initApiListener();
 
     // 4. 准备页面
     if (onProgress) {
