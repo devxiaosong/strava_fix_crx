@@ -4,7 +4,6 @@
  */
 
 import type { Activity, RuleConfig, FilterConfig, UpdateConfig, ScenarioType } from '~/types/activity';
-import type { BulkEditFields } from '~/types/strava';
 import {
   preparePageForExecution,
   hasNextPage,
@@ -15,8 +14,6 @@ import {
   waitForPageLoad,
 } from '~/core/pageManager';
 import {
-  initApiListener,
-  startListening,
   stopListening,
   waitForNextResponse,
 } from '~/core/apiListener';
