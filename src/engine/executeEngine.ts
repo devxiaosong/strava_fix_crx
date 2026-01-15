@@ -42,6 +42,7 @@ import {
 import { delay, CURRENT_DELAYS, getRetryDelay, smartDelay } from '~/config/delays';
 import { SELECTORS } from '~/config/selectors';
 import { findElement, findAllElements, clickElement, setInputValue } from '~/utils/domHelper';
+import { checkIfNeedsUpdate } from '~/utils/activityComparer';
 
 /**
  * 执行进度回调
@@ -233,6 +234,23 @@ async function processPageActivities(
       await incrementSkippedActivities();
       continue;
     }
+
+    // 检查是否需要更新（No Change检测）
+    const comparisonResult = checkIfNeedsUpdate(activity, updates);
+    
+    if (!comparisonResult.needsUpdate) {
+      console.log(
+        `[ExecuteEngine] Activity ${activity.id} "${activity.name}" matches rule but no change needed, skipping`
+      );
+      skipped++;
+      await incrementSkippedActivities();
+      continue;
+    }
+
+    console.log(
+      `[ExecuteEngine] Activity ${activity.id} "${activity.name}" needs update:`,
+      comparisonResult.changes.map(c => `${c.field}: ${c.displayOld} → ${c.displayNew}`).join(', ')
+    );
 
     // 找到对应的DOM元素
     const activityRow = Array.from(activityRows).find(row => {

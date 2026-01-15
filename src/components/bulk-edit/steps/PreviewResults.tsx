@@ -4,6 +4,8 @@ import type { ScenarioType, FilterConfig, UpdateConfig, Activity } from '~/types
 import { formatDate, formatDistance, getSportIcon } from '~/utils/formatHelper';
 import { runPreview } from '~/engine/previewEngine';
 import type { PreviewProgress } from '~/engine/previewEngine';
+import { checkIfNeedsUpdate, countUpdateStatus } from '~/utils/activityComparer';
+import type { ActivityComparisonResult } from '~/utils/activityComparer';
 
 const { Text, Title } = Typography;
 
@@ -21,6 +23,7 @@ export function PreviewResults({ scenario, filters, updates, onStartExecution }:
   const [matchedActivities, setMatchedActivities] = useState<Activity[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [totalPages, setTotalPages] = useState(0);
+  const [comparisonResults, setComparisonResults] = useState<Map<string | number, ActivityComparisonResult>>(new Map());
 
   useEffect(() => {
     let isMounted = true;
@@ -53,7 +56,16 @@ export function PreviewResults({ scenario, filters, updates, onStartExecution }:
         if (result.success) {
           console.log('[PreviewResults] Matched activities:', result.matchedActivities);
           console.log('[PreviewResults] Sample activity:', result.matchedActivities[0]);
+          
+          // 检查每个活动是否需要更新
+          const results = new Map<string | number, ActivityComparisonResult>();
+          result.matchedActivities.forEach(activity => {
+            const comparisonResult = checkIfNeedsUpdate(activity, updates);
+            results.set(activity.id, comparisonResult);
+          });
+          
           setMatchedActivities(result.matchedActivities);
+          setComparisonResults(results);
           setScanned(result.totalScanned);
           setTotalPages(result.totalPages);
           setLoading(false);
@@ -126,36 +138,34 @@ export function PreviewResults({ scenario, filters, updates, onStartExecution }:
     );
   }
 
-  // 格式化更新信息
-  const formatUpdateInfo = (activity: Activity): { summary: string; details: string[] } => {
-    const details: string[] = [];
+  // 格式化更新信息（使用比较结果）
+  const formatUpdateInfo = (activity: Activity): { summary: string; details: string[]; needsUpdate: boolean } => {
+    const comparisonResult = comparisonResults.get(activity.id);
     
-    if (updates.gearId) {
-      const oldGear = activity.bike_id || activity.athlete_gear_id;
-      const oldText = oldGear || 'None';
-      details.push(`Gear: ${oldText} → ${updates.gearId}`);
+    if (!comparisonResult) {
+      // 如果没有比较结果，返回默认值
+      return { summary: 'Unknown', details: [], needsUpdate: true };
     }
     
-    if (updates.privacy) {
-      const oldPrivacy = activity.visibility || 'everyone';
-      const privacyMap: Record<string, string> = {
-        'everyone': 'Everyone',
-        'followers_only': 'Followers Only',
-        'only_me': 'Only Me'
+    if (!comparisonResult.needsUpdate) {
+      // 无需更新
+      return {
+        summary: 'No change needed',
+        details: ['All fields already match target values'],
+        needsUpdate: false,
       };
-      const oldText = privacyMap[oldPrivacy] || oldPrivacy;
-      const newText = privacyMap[updates.privacy] || updates.privacy;
-      details.push(`Privacy: ${oldText} → ${newText}`);
     }
     
-    if (updates.rideType) {
-      const oldType = activity.ride_type || activity.workout_type;
-      const oldText = oldType || 'None';
-      details.push(`Ride Type: ${oldText} → ${updates.rideType}`);
-    }
+    // 需要更新：格式化变更详情
+    const details = comparisonResult.changes.map(change => {
+      const fieldName = change.field === 'gear' ? 'Gear' : 
+                        change.field === 'privacy' ? 'Privacy' : 'Ride Type';
+      return `${fieldName}: ${change.displayOld} → ${change.displayNew}`;
+    });
     
-    const summary = details.length > 0 ? `${details.length} update(s)` : 'No updates';
-    return { summary, details };
+    const summary = `${comparisonResult.changes.length} update(s)`;
+    
+    return { summary, details, needsUpdate: true };
   };
 
   const columns = [
@@ -196,11 +206,15 @@ export function PreviewResults({ scenario, filters, updates, onStartExecution }:
       title: 'Updates',
       key: 'updates',
       render: (_: any, record: Activity) => {
-        const { summary, details } = formatUpdateInfo(record);
+        const { summary, details, needsUpdate } = formatUpdateInfo(record);
         
         if (details.length === 0) {
           return <Text type="secondary">-</Text>;
         }
+        
+        // 根据是否需要更新显示不同颜色的Tag
+        const tagColor = needsUpdate ? 'blue' : 'default';
+        const tagStyle = needsUpdate ? { cursor: 'pointer' } : { cursor: 'pointer', color: '#999' };
         
         return (
           <Tooltip
@@ -212,7 +226,7 @@ export function PreviewResults({ scenario, filters, updates, onStartExecution }:
               </div>
             }
           >
-            <Tag color="blue" style={{ cursor: 'pointer' }}>
+            <Tag color={tagColor} style={tagStyle}>
               {summary}
             </Tag>
           </Tooltip>
@@ -221,6 +235,9 @@ export function PreviewResults({ scenario, filters, updates, onStartExecution }:
     },
   ];
 
+  // 计算统计信息
+  const stats = countUpdateStatus(matchedActivities, updates);
+
   return (
     <Space direction="vertical" size="middle" style={{ width: '100%' }}>
       <div>
@@ -228,6 +245,21 @@ export function PreviewResults({ scenario, filters, updates, onStartExecution }:
         <Tag color="orange">{matchedActivities.length}</Tag>
         <Text strong>activities (scanned {scanned}, {totalPages} pages)</Text>
       </div>
+      
+      {/* 统计信息 */}
+      <Card size="small" style={{ backgroundColor: '#fafafa' }}>
+        <Space size="large">
+          <div>
+            <Text type="secondary">Needs Update: </Text>
+            <Text strong style={{ color: '#1890ff', fontSize: '16px' }}>{stats.needsUpdate}</Text>
+          </div>
+          <div>
+            <Text type="secondary">No Change: </Text>
+            <Text strong style={{ color: '#999', fontSize: '16px' }}>{stats.noChange}</Text>
+          </div>
+        </Space>
+      </Card>
+      
       <Table
         dataSource={matchedActivities}
         columns={columns}
@@ -240,9 +272,9 @@ export function PreviewResults({ scenario, filters, updates, onStartExecution }:
         <Button
           type="primary"
           onClick={onStartExecution}
-          disabled={matchedActivities.length === 0}
+          disabled={stats.needsUpdate === 0}
         >
-          Start Execution
+          Start Execution ({stats.needsUpdate} activities)
         </Button>
       </div>
     </Space>
