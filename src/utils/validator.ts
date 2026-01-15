@@ -44,17 +44,33 @@ export function isValidDateRange(
   startDate: string | null | undefined,
   endDate: string | null | undefined
 ): boolean {
-  if (!startDate || !endDate) return false;
-  if (typeof startDate !== 'string' || typeof endDate !== 'string') return false;
+  console.log('[Validator] isValidDateRange called:', { startDate, endDate });
+  
+  if (!startDate || !endDate) {
+    console.log('[Validator] Missing date:', !startDate ? 'start' : 'end');
+    return false;
+  }
+  
+  if (typeof startDate !== 'string' || typeof endDate !== 'string') {
+    console.log('[Validator] Wrong type:', { startType: typeof startDate, endType: typeof endDate });
+    return false;
+  }
 
   const start = new Date(startDate).getTime();
   const end = new Date(endDate).getTime();
 
+  console.log('[Validator] Parsed times:', { start, end, startValid: !isNaN(start), endValid: !isNaN(end) });
+
   // 检查日期是否有效
-  if (isNaN(start) || isNaN(end)) return false;
+  if (isNaN(start) || isNaN(end)) {
+    console.log('[Validator] Invalid date:', isNaN(start) ? 'start' : 'end');
+    return false;
+  }
 
   // 开始日期必须早于或等于结束日期
-  return start <= end;
+  const valid = start <= end;
+  console.log('[Validator] Date range valid:', valid, 'start <= end:', start <= end);
+  return valid;
 }
 
 /**
@@ -83,6 +99,7 @@ export function isValidDistanceRange(
  * @returns boolean
  */
 export function isValidCondition(condition: ConditionConfig): boolean {
+  console.log('song start isValidCondition', condition);
   if (!condition || typeof condition !== 'object') return false;
   if (!condition.type) return false;
 
@@ -99,13 +116,38 @@ export function isValidCondition(condition: ConditionConfig): boolean {
 
     case 'dateRange':
       // 必须是日期范围对象数组
-      return Array.isArray(condition.value) && 
-             condition.value.length > 0 && 
-             condition.value.every(range => 
-               range && 
-               typeof range === 'object' && 
-               isValidDateRange(range.start, range.end)
-             );
+      console.log('[Validator] Validating dateRange condition:', condition.value);
+      
+      if (!Array.isArray(condition.value)) {
+        console.log('[Validator] dateRange value is not an array');
+        return false;
+      }
+      
+      if (condition.value.length === 0) {
+        console.log('[Validator] dateRange array is empty');
+        return false;
+      }
+      
+      const allValid = condition.value.every((range, index) => {
+        console.log(`[Validator] Checking range ${index}:`, range);
+        
+        if (!range) {
+          console.log(`[Validator] Range ${index} is falsy`);
+          return false;
+        }
+        
+        if (typeof range !== 'object') {
+          console.log(`[Validator] Range ${index} is not an object, type:`, typeof range);
+          return false;
+        }
+        
+        const valid = isValidDateRange(range.start, range.end);
+        console.log(`[Validator] Range ${index} validation result:`, valid);
+        return valid;
+      });
+      
+      console.log('[Validator] dateRange overall valid:', allValid);
+      return allValid;
 
     case 'distanceRange':
       // 必须有 min 和 max，且是有效的距离范围

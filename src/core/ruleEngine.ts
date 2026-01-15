@@ -247,7 +247,18 @@ export function compileRule(filterConfig: FilterConfig): RuleConfig {
 
   const rule: RuleConfig = { conditions };
 
-  console.log('[RuleEngine] Compiled rule from filter config:', rule);
+  console.log('[RuleEngine] Compiled rule from filter config:', JSON.stringify(rule, null, 2));
+  
+  // 验证编译后的规则
+  if (!isValidRule(rule)) {
+    console.error('[RuleEngine] Compiled rule is INVALID!', rule);
+    // 检查每个条件
+    rule.conditions.forEach((condition, index) => {
+      const valid = isValidCondition(condition);
+      console.log(`[RuleEngine] Condition ${index} (${condition.type}):`, valid ? '✅ Valid' : '❌ Invalid', condition);
+    });
+  }
+  
   return rule;
 }
 

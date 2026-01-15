@@ -106,7 +106,11 @@ export function FilterConfig({ scenario, onSubmit, onExecute, onPrevious, initia
 
   const updateDateRange = (id: string, dates: [dayjs.Dayjs | null, dayjs.Dayjs | null] | null) => {
     setDateRanges(dateRanges.map(r =>
-      r.id === id ? { ...r, start: dates?.[0]?.toDate() || null, end: dates?.[1]?.toDate() || null } : r
+      r.id === id ? { 
+        ...r, 
+        start: dates?.[0]?.toISOString() || null,  // 转为 ISO 字符串
+        end: dates?.[1]?.toISOString() || null      // 转为 ISO 字符串
+      } : r
     ));
   };
 

@@ -51,6 +51,8 @@ export function PreviewResults({ scenario, filters, updates, onStartExecution }:
         if (!isMounted) return;
 
         if (result.success) {
+          console.log('[PreviewResults] Matched activities:', result.matchedActivities);
+          console.log('[PreviewResults] Sample activity:', result.matchedActivities[0]);
           setMatchedActivities(result.matchedActivities);
           setScanned(result.totalScanned);
           setTotalPages(result.totalPages);
@@ -133,9 +135,9 @@ export function PreviewResults({ scenario, filters, updates, onStartExecution }:
     },
     {
       title: 'Date',
-      dataIndex: 'date',
-      key: 'date',
-      render: (date: Date) => formatDate(date),
+      dataIndex: 'start_time',
+      key: 'start_time',
+      render: (startTime: string) => formatDate(startTime),
     },
     {
       title: 'Name',
@@ -144,9 +146,9 @@ export function PreviewResults({ scenario, filters, updates, onStartExecution }:
     },
     {
       title: 'Distance',
-      dataIndex: 'distance',
-      key: 'distance',
-      render: (distance: number) => formatDistance(distance),
+      dataIndex: 'distance_raw',
+      key: 'distance_raw',
+      render: (distanceRaw: number) => formatDistance(distanceRaw),
     },
   ];
 
@@ -155,7 +157,7 @@ export function PreviewResults({ scenario, filters, updates, onStartExecution }:
       <div>
         <Text strong>Matched </Text>
         <Tag color="orange">{matchedActivities.length}</Tag>
-        <Text strong> activities (scanned {scanned}, {totalPages} pages)</Text>
+        <Text strong>activities (scanned {scanned}, {totalPages} pages)</Text>
       </div>
       <Table
         dataSource={matchedActivities}
