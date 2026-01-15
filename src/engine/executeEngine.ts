@@ -21,24 +21,6 @@ import {
   waitForNextResponse,
 } from '~/core/apiListener';
 import { evaluateRule, shouldStopPaging, compileRule } from '~/core/ruleEngine';
-import {
-  initTaskManager,
-  createTask,
-  startTask,
-  pauseTask,
-  resumeTask,
-  completeTask,
-  updateProgress,
-  updateCurrentPage,
-  incrementSuccessfulUpdates,
-  recordFailedUpdate,
-  incrementSkippedActivities,
-  updateEstimatedTime,
-  calculateEstimatedTime,
-  getCurrentTask,
-  canResumeTask,
-  hasActiveTask,
-} from '~/core/taskManager';
 import { delay, CURRENT_DELAYS, getRetryDelay, smartDelay } from '~/config/delays';
 import { SELECTORS } from '~/config/selectors';
 import { findElement, findAllElements, clickElement, setInputValue } from '~/utils/domHelper';
@@ -231,7 +213,6 @@ async function processPageActivities(
     if (!matches) {
       console.log(`[ExecuteEngine] Activity ${activity.id} does not match rule, skipping`);
       skipped++;
-      await incrementSkippedActivities();
       continue;
     }
 
@@ -243,7 +224,6 @@ async function processPageActivities(
         `[ExecuteEngine] Activity ${activity.id} "${activity.name}" matches rule but no change needed, skipping`
       );
       skipped++;
-      await incrementSkippedActivities();
       continue;
     }
 
@@ -266,7 +246,6 @@ async function processPageActivities(
         name: activity.name,
         error: 'DOM element not found',
       });
-      await recordFailedUpdate(String(activity.id), activity.name, 'DOM element not found');
       continue;
     }
 
@@ -280,7 +259,6 @@ async function processPageActivities(
 
         if (updateSuccess) {
           successful++;
-          await incrementSuccessfulUpdates();
           console.log(`[ExecuteEngine] Successfully updated activity ${activity.id}`);
         } else {
           retryCount++;
@@ -307,7 +285,6 @@ async function processPageActivities(
             name: activity.name,
             error: errorMessage,
           });
-          await recordFailedUpdate(String(activity.id), activity.name, errorMessage);
         } else {
           const retryDelay = getRetryDelay(retryCount);
           await delay(retryDelay);
@@ -349,18 +326,7 @@ export async function runExecution(config: ExecutionConfig): Promise<ExecutionRe
   executionState.processedCount = 0;
 
   try {
-    // 1. 初始化任务管理器
-    await initTaskManager();
-
-    // 2. 创建或加载任务
-    const existingTask = getCurrentTask();
-    if (!existingTask || !canResumeTask()) {
-      await createTask(scenario, filters, updates);
-    }
-
-    await startTask();
-
-    // 4. 准备页面
+    // 1. 准备页面
     if (onProgress) {
       onProgress({
         currentPage: 0,
@@ -399,7 +365,6 @@ export async function runExecution(config: ExecutionConfig): Promise<ExecutionRe
     while (shouldContinue) {
       // 检查是否暂停
       if (executionState.isPaused) {
-        await pauseTask();
         console.log('[ExecuteEngine] Execution paused by user');
         break;
       }
@@ -412,7 +377,6 @@ export async function runExecution(config: ExecutionConfig): Promise<ExecutionRe
 
       const currentPage = getCurrentPage();
       totalPages = currentPage;
-      await updateCurrentPage(currentPage);
 
       try {
         // 等待 API 响应获取活动数据
@@ -438,12 +402,9 @@ export async function runExecution(config: ExecutionConfig): Promise<ExecutionRe
 
         // 计算预计剩余时间
         const elapsedTime = Date.now() - executionState.startTime;
-        const estimatedTime = calculateEstimatedTime(
-          totalProcessed,
-          totalProcessed + 100, // 暂估，可以优化
-          elapsedTime
-        );
-        await updateEstimatedTime(estimatedTime);
+        const estimatedTime = totalProcessed > 0 
+          ? Math.ceil(((elapsedTime / totalProcessed) * 100) / 1000)
+          : 0;
 
         // 报告进度
         if (onProgress) {
@@ -512,10 +473,6 @@ export async function runExecution(config: ExecutionConfig): Promise<ExecutionRe
 
     stopListening();
 
-    if (!executionState.isPaused) {
-      await completeTask(hasError ? errorMessage : undefined);
-    }
-
     // 最终进度报告
     if (onProgress) {
       onProgress({
@@ -546,8 +503,6 @@ export async function runExecution(config: ExecutionConfig): Promise<ExecutionRe
     stopListening();
 
     errorMessage = `Execution failed: ${(error as Error).message}`;
-
-    await completeTask(errorMessage);
 
     // 报告错误
     if (onProgress) {
@@ -592,12 +547,11 @@ export function pauseExecution(): void {
 export async function resumeExecution(config: ExecutionConfig): Promise<ExecutionResult> {
   console.log('[ExecuteEngine] Resume requested');
 
-  if (!canResumeTask()) {
+  if (!executionState.isPaused) {
     throw new Error('No paused task to resume');
   }
 
   executionState.isPaused = false;
-  await resumeTask();
 
   return runExecution(config);
 }
@@ -615,7 +569,7 @@ export function stopExecution(): void {
  * @returns boolean
  */
 export function isExecuting(): boolean {
-  return hasActiveTask() && !executionState.isPaused;
+  return !executionState.isPaused && !executionState.shouldStop;
 }
 
 /**
