@@ -189,51 +189,15 @@ export function isOnFirstPage(): boolean {
  * @returns Promise<boolean> 是否成功回到第一页
  */
 export async function goToFirstPage(): Promise<boolean> {
-  console.log('[PageManager] Attempting to go to first page');
-
-  // 如果已经在第一页，直接返回成功
-  if (isOnFirstPage()) {
-    console.log('[PageManager] Already on first page');
-    return true;
-  }
   
-  // 直接使用日期排序按钮回到第一页
-  // 原理：点击排序会重新加载数据，默认从第一页开始
-  const sortButton = findElement<HTMLButtonElement>(SELECTORS.SORT.SORT_BUTTON);
-
-  if (!sortButton) {
-    console.error('[PageManager] Date sort button not found');
-    return false;
-  }
-
-  if (!isElementInteractive(sortButton)) {
-    console.error('[PageManager] Date sort button is not interactive');
-    return false;
-  }
-
-  console.log('[PageManager] Clicking date sort button to go to first page...');
-  
-  // 点击日期排序按钮
-  const clicked = await clickElement(sortButton, CURRENT_DELAYS.PAGE_LOAD);
+  // 使用封装的点击排序按钮函数，不管是不是第一页，都点击一次排序
+  const clicked = await clickSortButton();
   
   if (!clicked) {
-    console.error('[PageManager] Failed to click date sort button');
     return false;
   }
 
-  // 等待页面加载
-  await waitForPageLoad();
-
-  // 最终验证是否在第一页
-  const success = isOnFirstPage();
-  
-  if (success) {
-    console.log('[PageManager] Successfully navigated to first page via date sort');
-  } else {
-    console.warn('[PageManager] Failed to reach first page, current page:', getCurrentPage());
-  }
-
-  return success;
+  return true;
 }
 
 /**
@@ -254,6 +218,37 @@ export async function ensureFirstPage(maxRetries: number = 3): Promise<boolean> 
   }
 
   return false;
+}
+
+/**
+ * 点击排序按钮并等待页面加载
+ * @returns Promise<boolean> 是否点击成功
+ */
+async function clickSortButton(): Promise<boolean> {
+  const sortButton = findElement<HTMLButtonElement>(SELECTORS.SORT.SORT_BUTTON);
+
+  if (!sortButton) {
+    console.error('[PageManager] Date sort button not found');
+    return false;
+  }
+
+  if (!isElementInteractive(sortButton)) {
+    console.error('[PageManager] Date sort button is not interactive');
+    return false;
+  }
+
+  // 点击排序按钮
+  const clicked = await clickElement(sortButton, CURRENT_DELAYS.PAGE_LOAD);
+  
+  if (!clicked) {
+    console.error('[PageManager] Failed to click sort button');
+    return false;
+  }
+
+  // 等待页面重新加载
+  await waitForPageLoad();
+  
+  return true;
 }
 
 /**
@@ -283,29 +278,18 @@ export function isTimeSortedDescending(): boolean {
 export async function sortByTimeDescending(): Promise<boolean> {
   console.log('[PageManager] Attempting to sort by time (descending)');
 
-  const sortButton = findElement<HTMLButtonElement>(SELECTORS.SORT.SORT_BUTTON);
-
-  if (!sortButton) {
-    console.error('[PageManager] Sort by date button not found');
-    return false;
-  }
-
   // 如果已经是降序排序，直接返回
   if (isTimeSortedDescending()) {
     console.log('[PageManager] Already sorted by time (descending)');
     return true;
   }
-
-  // 点击排序按钮
-  const clicked = await clickElement(sortButton, CURRENT_DELAYS.PAGE_LOAD);
+  
+  // 使用封装的点击排序按钮函数
+  const clicked = await clickSortButton();
   
   if (!clicked) {
-    console.error('[PageManager] Failed to click sort button');
     return false;
   }
-
-  // 等待页面重新加载
-  await waitForPageLoad();
 
   // 验证排序是否成功
   const success = isTimeSortedDescending();
@@ -316,8 +300,7 @@ export async function sortByTimeDescending(): Promise<boolean> {
     console.warn('[PageManager] Sorting may have failed, or requires another click');
     // 某些实现需要点击两次才能切换到降序
     if (!isTimeSortedDescending()) {
-      await clickElement(sortButton, CURRENT_DELAYS.PAGE_LOAD);
-      await waitForPageLoad();
+      await clickSortButton();
     }
   }
 
