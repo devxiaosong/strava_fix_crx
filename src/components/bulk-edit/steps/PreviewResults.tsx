@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Space, Typography, Table, Tag, Progress, Card, Button, Alert } from 'antd';
+import { Space, Typography, Table, Tag, Progress, Card, Button, Alert, Tooltip } from 'antd';
 import type { ScenarioType, FilterConfig, UpdateConfig, Activity } from '~/types/activity';
 import { formatDate, formatDistance, getSportIcon } from '~/utils/formatHelper';
 import { runPreview } from '~/engine/previewEngine';
@@ -37,7 +37,7 @@ export function PreviewResults({ scenario, filters, updates, onStartExecution }:
 
             setScanned(progressData.scannedActivities);
             setTotalPages(progressData.currentPage);
-            
+
             // 计算进度百分比
             if (progressData.estimatedTotal) {
               setProgress((progressData.scannedActivities / progressData.estimatedTotal) * 100);
@@ -126,13 +126,39 @@ export function PreviewResults({ scenario, filters, updates, onStartExecution }:
     );
   }
 
+  // 格式化更新信息
+  const formatUpdateInfo = (activity: Activity): { summary: string; details: string[] } => {
+    const details: string[] = [];
+    
+    if (updates.gearId) {
+      const oldGear = activity.bike_id || activity.athlete_gear_id;
+      const oldText = oldGear || 'None';
+      details.push(`Gear: ${oldText} → ${updates.gearId}`);
+    }
+    
+    if (updates.privacy) {
+      const oldPrivacy = activity.visibility || 'everyone';
+      const privacyMap: Record<string, string> = {
+        'everyone': 'Everyone',
+        'followers_only': 'Followers Only',
+        'only_me': 'Only Me'
+      };
+      const oldText = privacyMap[oldPrivacy] || oldPrivacy;
+      const newText = privacyMap[updates.privacy] || updates.privacy;
+      details.push(`Privacy: ${oldText} → ${newText}`);
+    }
+    
+    if (updates.rideType) {
+      const oldType = activity.ride_type || activity.workout_type;
+      const oldText = oldType || 'None';
+      details.push(`Ride Type: ${oldText} → ${updates.rideType}`);
+    }
+    
+    const summary = details.length > 0 ? `${details.length} update(s)` : 'No updates';
+    return { summary, details };
+  };
+
   const columns = [
-    {
-      title: 'Type',
-      dataIndex: 'sport_type',
-      key: 'sport_type',
-      render: (type: string) => getSportIcon(type),
-    },
     {
       title: 'Date',
       dataIndex: 'start_time',
@@ -143,12 +169,55 @@ export function PreviewResults({ scenario, filters, updates, onStartExecution }:
       title: 'Name',
       dataIndex: 'name',
       key: 'name',
+      render: (name: string, record: Activity) => (
+        <a 
+          href={`https://www.strava.com/activities/${record.id}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ color: '#1890ff' }}
+        >
+          {name}
+        </a>
+      ),
+    },
+    {
+      title: 'Type',
+      dataIndex: 'sport_type',
+      key: 'sport_type',
+      render: (type: string) => getSportIcon(type),
     },
     {
       title: 'Distance',
       dataIndex: 'distance_raw',
       key: 'distance_raw',
       render: (distanceRaw: number) => formatDistance(distanceRaw),
+    },
+    {
+      title: 'Updates',
+      key: 'updates',
+      render: (_: any, record: Activity) => {
+        const { summary, details } = formatUpdateInfo(record);
+        
+        if (details.length === 0) {
+          return <Text type="secondary">-</Text>;
+        }
+        
+        return (
+          <Tooltip
+            title={
+              <div>
+                {details.map((detail, index) => (
+                  <div key={index}>{detail}</div>
+                ))}
+              </div>
+            }
+          >
+            <Tag color="blue" style={{ cursor: 'pointer' }}>
+              {summary}
+            </Tag>
+          </Tooltip>
+        );
+      },
     },
   ];
 
@@ -168,8 +237,8 @@ export function PreviewResults({ scenario, filters, updates, onStartExecution }:
         scroll={{ y: 250 }}
       />
       <div style={{ textAlign: 'right' }}>
-        <Button 
-          type="primary" 
+        <Button
+          type="primary"
           onClick={onStartExecution}
           disabled={matchedActivities.length === 0}
         >
