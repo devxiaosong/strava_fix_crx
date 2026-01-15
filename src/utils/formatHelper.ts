@@ -65,17 +65,17 @@ export function formatRelativeTime(timestamp: number): string {
 }
 
 /**
- * 格式化距离（米转公里，保留2位小数）
+ * 格式化距离（米转英里，保留2位小数）
  * @param distanceInMeters 距离（米）
- * @returns 格式化后的距离字符串（如：12.34 km）
+ * @returns 格式化后的距离字符串（如：12.34 mi）
  */
 export function formatDistance(distanceInMeters: number): string {
   if (distanceInMeters === null || distanceInMeters === undefined) {
-    return '0 km';
+    return '0 mi';
   }
 
-  const km = distanceInMeters / 1000;
-  return `${km.toFixed(2)} km`;
+  const miles = distanceInMeters / 1609.34;  // 米 → 英里
+  return `${miles.toFixed(2)} mi`;
 }
 
 /**
