@@ -14,8 +14,8 @@ import {
   waitForPageLoad,
 } from '~/core/pageManager';
 import {
-  stopListening,
   waitForNextResponse,
+  getCachedPageData,
 } from '~/core/apiListener';
 import { evaluateRule, shouldStopPaging, compileRule } from '~/core/ruleEngine';
 import { delay, CURRENT_DELAYS, getRetryDelay, smartDelay } from '~/config/delays';
@@ -289,6 +289,22 @@ async function processPageActivities(
       }
     }
 
+    // 如果重试用完后还是失败，记录到 failed
+    // 注意：catch块中的异常已经在上面处理过了，这里只处理返回false的情况
+    if (!updateSuccess && retryCount > maxRetries) {
+      // 检查是否已经在catch块中计数过（避免重复）
+      const alreadyCounted = failedDetails.some(f => f.id === String(activity.id));
+      if (!alreadyCounted) {
+        failed++;
+        failedDetails.push({
+          id: String(activity.id),
+          name: activity.name,
+          error: 'Update returned false after retries',
+        });
+        console.error(`[ExecuteEngine] Activity ${activity.id} failed after ${retryCount} attempts`);
+      }
+    }
+
     // 增加处理计数
     executionState.processedCount++;
   }
@@ -376,15 +392,25 @@ export async function runExecution(config: ExecutionConfig): Promise<ExecutionRe
       totalPages = currentPage;
 
       try {
-        // 等待 API 响应获取活动数据
-        const apiResponse = await waitForNextResponse();
+        // 优先从缓存获取数据（参考 previewEngine 的做法）
+        let activities: Activity[];
+        const cachedData = getCachedPageData(currentPage);
+        
+        if (cachedData) {
+          console.log(`[ExecuteEngine] 使用缓存数据：第 ${currentPage} 页 (${cachedData.activities.length} 个活动)`);
+          activities = cachedData.activities;
+        } else {
+          // 缓存未命中，等待 API 响应
+          console.log(`[ExecuteEngine] 缓存未命中，等待 API 响应：第 ${currentPage} 页`);
+          const apiResponse = await waitForNextResponse();
 
-        if (!apiResponse) {
-          throw new Error('API response timeout');
+          if (!apiResponse) {
+            throw new Error('API response timeout');
+          }
+
+          activities = apiResponse.activities;
+          console.log(`[ExecuteEngine] 收到 API 响应：第 ${currentPage} 页 (${activities.length} 个活动)`);
         }
-
-        const { activities } = apiResponse;
-        console.log(`[ExecuteEngine] Processing page ${currentPage} with ${activities.length} activities`);
 
         // 处理当前页的活动
         const pageResult = await processPageActivities(activities, rule, updates, maxRetries);
@@ -468,8 +494,6 @@ export async function runExecution(config: ExecutionConfig): Promise<ExecutionRe
       `[ExecuteEngine] Execution completed: ${totalSuccessful} successful, ${totalFailed} failed, ${totalSkipped} skipped`
     );
 
-    stopListening();
-
     // 最终进度报告
     if (onProgress) {
       onProgress({
@@ -496,8 +520,6 @@ export async function runExecution(config: ExecutionConfig): Promise<ExecutionRe
     };
   } catch (error) {
     console.error('[ExecuteEngine] Execution failed:', error);
-
-    stopListening();
 
     errorMessage = `Execution failed: ${(error as Error).message}`;
 

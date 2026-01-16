@@ -15,8 +15,6 @@ import {
   hasCachedPage,
   getCachedPageData,
   waitForNextResponse,
-  startListening,
-  stopListening,
 } from '~/core/apiListener';
 import { evaluateRule, shouldStopPaging, compileRule } from '~/core/ruleEngine';
 import { delay, getRetryDelay } from '~/config/delays';
