@@ -20,7 +20,7 @@ import {
 import { evaluateRule, shouldStopPaging, compileRule } from '~/core/ruleEngine';
 import { delay, CURRENT_DELAYS, getRetryDelay, smartDelay } from '~/config/delays';
 import { SELECTORS } from '~/config/selectors';
-import { findElement, findAllElements, clickElement, setInputValue } from '~/utils/domHelper';
+import { findElement, clickElement, setInputValue } from '~/utils/domHelper';
 import { checkIfNeedsUpdate } from '~/utils/activityComparer';
 
 /**
@@ -150,6 +150,7 @@ async function updateSingleActivity(
     }
 
     await clickElement(submitButton, CURRENT_DELAYS.SUBMIT_SAVE);
+    console.log('[ExecuteEngine] song Submitted form');
 
     // 4. 等待保存完成（可能需要检查成功指示器）
     await smartDelay(500);
