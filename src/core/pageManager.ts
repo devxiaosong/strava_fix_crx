@@ -344,6 +344,7 @@ export function extractActivityId(activityRow: HTMLElement): string | null {
   // 尝试从 data 属性获取
   const idFromData = activityRow.getAttribute(SELECTORS.ACTIVITY.DATA_ACTIVITY_ID);
   if (idFromData) {
+    console.log('[[ExecuteEngine-Activity]] find by idFromData');
     return idFromData;
   }
 
@@ -351,6 +352,7 @@ export function extractActivityId(activityRow: HTMLElement): string | null {
   // 这里可能需要根据实际的Strava页面结构调整
   const idFromHref = activityRow.querySelector(SELECTORS.ACTIVITY.ACTIVITY_LINK);
   if (idFromHref) {
+    console.log('[[ExecuteEngine-Activity]] find by idFromHref');
     const href = idFromHref.getAttribute('href');
     const match = href?.match(/\/activities\/(\d+)/);
     if (match) {

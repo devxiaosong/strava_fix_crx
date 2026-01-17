@@ -189,19 +189,19 @@ async function processPageActivities(
   // 获取当前页的活动行元素
   const activityRows = getActivityRowElements();
 
-  console.log(`[ExecuteEngine] Processing ${activities.length} activities on current page`);
+  console.log(`[ExecuteEngine-Activity] Processing ${activities.length} activities on current page`);
 
   // 遍历每个活动
   for (const activity of activities) {
     // 检查是否暂停
     if (executionState.isPaused) {
-      console.log('[ExecuteEngine] Execution paused');
+      console.log('[ExecuteEngine-Activity] Execution paused');
       break;
     }
 
     // 检查是否应该停止
     if (executionState.shouldStop) {
-      console.log('[ExecuteEngine] Execution stopped');
+      console.log('[ExecuteEngine-Activity] Execution stopped');
       break;
     }
 
@@ -209,7 +209,7 @@ async function processPageActivities(
     const matches = evaluateRule(rule, activity);
 
     if (!matches) {
-      console.log(`[ExecuteEngine] Activity ${activity.id} does not match rule, skipping`);
+      console.log(`[ExecuteEngine-Activity] Activity ${activity.id} does not match rule, skipping`);
       skipped++;
       continue;
     }
@@ -226,18 +226,19 @@ async function processPageActivities(
     }
 
     console.log(
-      `[ExecuteEngine] Activity ${activity.id} "${activity.name}" needs update:`,
+      `[ExecuteEngine-Activity] Activity ${activity.id} "${activity.name}" needs update:`,
       comparisonResult.changes.map(c => `${c.field}: ${c.displayOld} → ${c.displayNew}`).join(', ')
     );
 
     // 找到对应的DOM元素
     const activityRow = Array.from(activityRows).find(row => {
       const rowId = extractActivityId(row);
-      return rowId === activity.id;
+      // 统一转为字符串比较（activity.id 可能是 number 或 string）
+      return rowId && String(rowId) === String(activity.id);
     });
 
     if (!activityRow) {
-      console.warn(`[ExecuteEngine] Cannot find DOM element for activity ${activity.id}`);
+      console.warn(`[ExecuteEngine-Activity] Activity Cannot find DOM element for activity ${activity.id}`);
       failed++;
       failedDetails.push({
         id: String(activity.id),
@@ -257,13 +258,13 @@ async function processPageActivities(
 
         if (updateSuccess) {
           successful++;
-          console.log(`[ExecuteEngine] Successfully updated activity ${activity.id}`);
+          console.log(`[ExecuteEngine-Activity] Successfully updated activity ${activity.id}`);
         } else {
           retryCount++;
           if (retryCount <= maxRetries) {
             const retryDelay = getRetryDelay(retryCount);
             console.warn(
-              `[ExecuteEngine] Update failed, retrying in ${retryDelay}ms (${retryCount}/${maxRetries})`
+              `[ExecuteEngine-Activity] Update failed, retrying in ${retryDelay}ms (${retryCount}/${maxRetries})`
             );
             await delay(retryDelay);
           }
@@ -271,7 +272,7 @@ async function processPageActivities(
       } catch (error) {
         retryCount++;
         console.error(
-          `[ExecuteEngine] Error updating activity ${activity.id}:`,
+          `[ExecuteEngine-Activity] Error updating activity ${activity.id}:`,
           error
         );
 
@@ -302,7 +303,7 @@ async function processPageActivities(
           name: activity.name,
           error: 'Update returned false after retries',
         });
-        console.error(`[ExecuteEngine] Activity ${activity.id} failed after ${retryCount} attempts`);
+        console.error(`[ExecuteEngine-Activity] ${activity.id} failed after ${retryCount} attempts`);
       }
     }
 
