@@ -103,6 +103,8 @@ async function updateSingleActivity(
       throw new Error('Quick edit button not found');
     }
 
+    await delay(5000);
+
     await clickElement(quickEditButton, CURRENT_DELAYS.QUICK_EDIT_CLICK);
 
     // 2. 填充表单字段
@@ -119,6 +121,8 @@ async function updateSingleActivity(
         setInputValue(shoesSelect, updates.gearId);
       }
     }
+
+    await delay(5000);
 
     if (updates.privacy) {
       const visibilitySelect = findElement<HTMLSelectElement>(
@@ -142,6 +146,8 @@ async function updateSingleActivity(
 
     await delay(CURRENT_DELAYS.FORM_FILL);
 
+    await delay(5000);
+    
     // 3. 提交表单
     const submitButton = findElement<HTMLButtonElement>(SELECTORS.EDIT.SUBMIT, activityRow);
 
@@ -153,7 +159,7 @@ async function updateSingleActivity(
     console.log('[ExecuteEngine] song Submitted form');
 
     // 4. 等待保存完成（可能需要检查成功指示器）
-    await smartDelay(500);
+    await smartDelay(5000);
 
     return true;
   } catch (error) {

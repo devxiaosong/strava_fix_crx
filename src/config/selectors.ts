@@ -22,8 +22,9 @@ export const ACTIVITY_SELECTORS = {
   /**
    * 快速编辑按钮
    * 点击后展开活动的内联编辑表单
+   * 注意：使用相对路径 .// 以便在特定 activityRow 上下文中查找
    */
-  QUICK_EDIT_BUTTON: "//*[contains(@class, 'training-activity-row')]//*[contains(@class, 'quick-edit')]",
+  QUICK_EDIT_BUTTON: ".//*[contains(@class, 'quick-edit')]",
   
   /**
    * 活动链接（包含活动ID）
@@ -45,30 +46,36 @@ export const EDIT_SELECTORS = {
   /**
    * 骑行类型下拉框
    * 选项: Ride, Race, Workout
+   * 注意：使用相对路径 .// 以便在特定 activityRow 上下文中查找
+   * 实际字段名是 tag_type_ride 而不是 workout_type_ride
    */
-  RIDE_TYPE: "//div[contains(@class, 'training-activity-row')]//select[@name='workout_type_ride']",
+  RIDE_TYPE: ".//select[@name='tag_type_ride']",
   
   /**
    * 自行车选择下拉框
+   * 注意：使用相对路径 .// 以便在特定 activityRow 上下文中查找
    */
-  BIKE: "//div[contains(@class, 'training-activity-row')]//select[@name='bike_id']",
+  BIKE: ".//select[@name='bike_id']",
   
   /**
    * 跑鞋选择下拉框
    * 也用于装备选择
+   * 注意：使用相对路径 .// 以便在特定 activityRow 上下文中查找
    */
-  SHOES: "//div[contains(@class, 'training-activity-row')]//select[@name='athlete_gear_id']",
+  SHOES: ".//select[@name='athlete_gear_id']",
   
   /**
    * 隐私设置下拉框
    * 选项: everyone, followers_only, only_me
+   * 注意：使用相对路径 .// 以便在特定 activityRow 上下文中查找
    */
-  VISIBILITY: "//div[contains(@class, 'training-activity-row')]//select[@name='visibility']",
+  VISIBILITY: ".//select[@name='visibility']",
   
   /**
    * 保存按钮（提交表单）
+   * 注意：使用相对路径 .// 以便在特定 activityRow 上下文中查找
    */
-  SUBMIT: "//*[contains(@class, 'training-activity-row')]//button[@type='submit']",
+  SUBMIT: ".//button[@type='submit']",
 } as const
 
 /**
