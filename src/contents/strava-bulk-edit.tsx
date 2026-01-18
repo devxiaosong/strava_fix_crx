@@ -4,6 +4,7 @@ import { ConfigProvider } from "antd"
 import { BulkEditModal } from "~components/bulk-edit/BulkEditModal"
 import { SELECTORS } from "~/config/selectors"
 import { initApiListener, debugCache } from "~/core/apiListener"
+import { getOperationDelay } from "~/utils/storage"
 
 // Import Ant Design styles
 import antdStyles from "data-text:antd/dist/reset.css"
@@ -169,12 +170,19 @@ const StravaBulkEditContent = () => {
     }
   }, [])
 
+  const handleBulkEditClick = async () => {
+    // 获取当前用户设置的操作延迟
+    const operationDelay = await getOperationDelay()
+    console.log(`[StravaBulkEdit] Opening Bulk Edit Modal, current operation delay: ${operationDelay}ms`)
+    setBulkEditOpen(true)
+  }
+
   return (
     <ConfigProvider>
       {!bulkEditOpen && (
         <div 
           className="bulk-edit-button-wrapper"
-          onClick={() => setBulkEditOpen(true)}
+          onClick={handleBulkEditClick}
         >
           <div className="bulk-edit-button-bg" />
           <div className="bulk-edit-button-content">

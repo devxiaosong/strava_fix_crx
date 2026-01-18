@@ -22,6 +22,7 @@ import { delay, CURRENT_DELAYS, getRetryDelay, smartDelay } from '~/config/delay
 import { SELECTORS } from '~/config/selectors';
 import { findElement, clickElement, setInputValue } from '~/utils/domHelper';
 import { checkIfNeedsUpdate } from '~/utils/activityComparer';
+import { getOperationDelay } from '~/utils/storage';
 
 /**
  * 执行进度回调
@@ -92,6 +93,9 @@ async function updateSingleActivity(
   activityRow: HTMLElement,
   updates: UpdateConfig
 ): Promise<boolean> {
+  // 读取用户设置的操作延迟（在活动开始时读取一次）
+  const operationDelay = await getOperationDelay();
+  
   try {
     // 1. 点击快速编辑按钮
     const quickEditButton = findElement<HTMLButtonElement>(
@@ -104,7 +108,7 @@ async function updateSingleActivity(
     }
 
     await clickElement(quickEditButton, CURRENT_DELAYS.QUICK_EDIT_CLICK);
-    await delay(5000);
+    await delay(operationDelay);
 
     // 2. 填充表单字段
     if (updates.gearId) {
@@ -112,14 +116,14 @@ async function updateSingleActivity(
       const bikeSelect = findElement<HTMLSelectElement>(SELECTORS.EDIT.BIKE, activityRow);
       if (bikeSelect) {
         setInputValue(bikeSelect, updates.gearId);
-        await delay(5000);
+        await delay(operationDelay);
     }
 
       // 尝试跑鞋选择器
       const shoesSelect = findElement<HTMLSelectElement>(SELECTORS.EDIT.SHOES, activityRow);
       if (shoesSelect) {
         setInputValue(shoesSelect, updates.gearId);
-        await delay(5000);
+        await delay(operationDelay);
       }
     }
 
@@ -131,7 +135,7 @@ async function updateSingleActivity(
       );
       if (visibilitySelect) {
         setInputValue(visibilitySelect, updates.privacy);
-        await delay(5000);
+        await delay(operationDelay);
       }
     }
 
@@ -142,7 +146,7 @@ async function updateSingleActivity(
       );
       if (workoutSelect) {
         setInputValue(workoutSelect, updates.rideType);
-        await delay(5000);
+        await delay(operationDelay);
       }
     }
     
@@ -154,7 +158,7 @@ async function updateSingleActivity(
     }
 
     await clickElement(submitButton, CURRENT_DELAYS.SUBMIT_SAVE);
-    await delay(5000);
+    await delay(operationDelay);
 
     return true;
   } catch (error) {
