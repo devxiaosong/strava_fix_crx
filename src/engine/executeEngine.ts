@@ -22,7 +22,7 @@ import { delay, CURRENT_DELAYS, getRetryDelay, smartDelay } from '~/config/delay
 import { SELECTORS } from '~/config/selectors';
 import { findElement, clickElement, setInputValue } from '~/utils/domHelper';
 import { checkIfNeedsUpdate } from '~/utils/activityComparer';
-import { getOperationDelay } from '~/utils/storage';
+import { getOperationDelayFromBridge } from '~/utils/bridge-client';
 
 /**
  * 执行进度回调
@@ -94,7 +94,7 @@ async function updateSingleActivity(
   updates: UpdateConfig
 ): Promise<boolean> {
   // 读取用户设置的操作延迟（在活动开始时读取一次）
-  const operationDelay = await getOperationDelay();
+  const operationDelay = await getOperationDelayFromBridge();
   
   try {
     // 1. 点击快速编辑按钮

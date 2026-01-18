@@ -5,7 +5,6 @@ import { BulkEditModal } from "~components/bulk-edit/BulkEditModal"
 import { SELECTORS } from "~/config/selectors"
 import { initApiListener, debugCache } from "~/core/apiListener"
 import { getOperationDelayFromBridge } from "~/utils/bridge-client"
-import { getOperationDelay } from "~/utils/storage"
 
 // Import Ant Design styles
 import antdStyles from "data-text:antd/dist/reset.css"
