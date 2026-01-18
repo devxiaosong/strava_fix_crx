@@ -4,7 +4,7 @@ import { ConfigProvider } from "antd"
 import { BulkEditModal } from "~components/bulk-edit/BulkEditModal"
 import { SELECTORS } from "~/config/selectors"
 import { initApiListener, debugCache } from "~/core/apiListener"
-import { getOperationDelayFromBridge } from "~/utils/bridge-client"
+import { getOperationDelayFromBridge, logInfoFromBridge } from "~/utils/bridge-client"
 
 // Import Ant Design styles
 import antdStyles from "data-text:antd/dist/reset.css"
@@ -158,6 +158,9 @@ const StravaBulkEditContent = () => {
     
     console.log('[StravaBulkEdit] API 监听器已启动，将自动缓存所有 API 响应')
     
+    // 记录扩展加载日志
+    logInfoFromBridge('load crx', 'Strava Bulk Edit extension loaded successfully')
+    
     // 5秒后打印缓存调试信息
     const debugTimer = setTimeout(() => {
       debugCache()
@@ -173,7 +176,10 @@ const StravaBulkEditContent = () => {
   const handleBulkEditClick = async () => {
     // 获取当前用户设置的操作延迟（通过消息桥接）
     const operationDelay = await getOperationDelayFromBridge()
-    console.log(`[StravaBulkEdit] Opening Bulk Edit Modal, current operation delay: ${operationDelay}ms`)
+    
+    // 记录用户点击事件
+    await logInfoFromBridge('show modal', `User opened bulk edit modal, delay: ${operationDelay}ms`)
+    
     setBulkEditOpen(true)
   }
 

@@ -5,7 +5,8 @@
  */
 import type { PlasmoCSConfig } from "plasmo";
 import { getOperationDelay, getSettings } from "~/utils/storage";
-import type { BridgeHandlers, BridgeRequest, BridgeResponse } from "~/types/bridge";
+import { logInfo, logDebug, logWarning, logError } from "~/utils/misc";
+import type { BridgeHandlers, BridgeRequest, BridgeResponse, LogPayload } from "~/types/bridge";
 import { BRIDGE_EVENTS } from "~/types/bridge";
 
 export const config: PlasmoCSConfig = {
@@ -30,6 +31,30 @@ const handlers: BridgeHandlers = {
     console.log(`[MessageBridge] Got settings:`, settings);
     return settings;
   },
+  
+  'LOG_INFO': async (payload: LogPayload) => {
+    logInfo(payload.eventName, payload.eventBody);
+    console.log(`[MessageBridge] Logged info: ${payload.eventName}`);
+    return true;
+  },
+  
+  'LOG_DEBUG': async (payload: LogPayload) => {
+    logDebug(payload.eventName, payload.eventBody);
+    console.log(`[MessageBridge] Logged debug: ${payload.eventName}`);
+    return true;
+  },
+  
+  'LOG_WARNING': async (payload: LogPayload) => {
+    logWarning(payload.eventName, payload.eventBody);
+    console.log(`[MessageBridge] Logged warning: ${payload.eventName}`);
+    return true;
+  },
+  
+  'LOG_ERROR': async (payload: LogPayload) => {
+    logError(payload.eventName, payload.eventBody);
+    console.log(`[MessageBridge] Logged error: ${payload.eventName}`);
+    return true;
+  },
 };
 
 /**
@@ -47,8 +72,8 @@ async function handleRequest(request: BridgeRequest) {
       throw new Error(`Unknown request type: ${type}`);
     }
     
-    // 执行处理器
-    const data = await handler();
+    // 执行处理器（传入 payload 如果存在）
+    const data = await handler(payload);
     
     // 发送成功响应
     const response: BridgeResponse = {
