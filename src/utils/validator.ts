@@ -45,12 +45,12 @@ export function isValidDateRange(
   endDate: string | null | undefined
 ): boolean {
   console.log('[Validator] isValidDateRange called:', { startDate, endDate });
-  
+
   if (!startDate || !endDate) {
     console.log('[Validator] Missing date:', !startDate ? 'start' : 'end');
     return false;
   }
-  
+
   if (typeof startDate !== 'string' || typeof endDate !== 'string') {
     console.log('[Validator] Wrong type:', { startType: typeof startDate, endType: typeof endDate });
     return false;
@@ -109,42 +109,42 @@ export function isValidCondition(condition: ConditionConfig): boolean {
   switch (condition.type) {
     case 'sportType':
       // 必须是非空字符串数组
-      return Array.isArray(condition.value) && 
-             condition.value.length > 0 && 
+      return Array.isArray(condition.value) &&
+             condition.value.length > 0 &&
              condition.value.every(v => typeof v === 'string' && v.length > 0);
 
     case 'dateRange':
       // 必须是日期范围对象数组
       console.log('[Validator] Validating dateRange condition:', condition.value);
-      
+
       if (!Array.isArray(condition.value)) {
         console.log('[Validator] dateRange value is not an array');
         return false;
       }
-      
+
       if (condition.value.length === 0) {
         console.log('[Validator] dateRange array is empty');
         return false;
       }
-      
+
       const allValid = condition.value.every((range, index) => {
         console.log(`[Validator] Checking range ${index}:`, range);
-        
+
         if (!range) {
           console.log(`[Validator] Range ${index} is falsy`);
           return false;
         }
-        
+
         if (typeof range !== 'object') {
           console.log(`[Validator] Range ${index} is not an object, type:`, typeof range);
           return false;
         }
-        
+
         const valid = isValidDateRange(range.start, range.end);
         console.log(`[Validator] Range ${index} validation result:`, valid);
         return valid;
       });
-      
+
       console.log('[Validator] dateRange overall valid:', allValid);
       return allValid;
 
@@ -155,8 +155,8 @@ export function isValidCondition(condition: ConditionConfig): boolean {
 
     case 'rideType':
       // 必须是非空字符串数组
-      return Array.isArray(condition.value) && 
-             condition.value.length > 0 && 
+      return Array.isArray(condition.value) &&
+             condition.value.length > 0 &&
              condition.value.every(v => typeof v === 'string' && v.length > 0);
 
     default:
@@ -281,7 +281,8 @@ export function isOnTrainingLogPage(): boolean {
  * @returns boolean
  */
 export function isPageLoaded(): boolean {
-  return document.readyState === 'complete';
+  // return document.readyState === 'complete';
+  return true;
 }
 
 

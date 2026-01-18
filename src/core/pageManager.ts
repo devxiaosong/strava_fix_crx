@@ -20,7 +20,7 @@ import {
  * 验证活动列表是否已加载就绪
  * @returns boolean
  */
-export function isActivityListReady(): boolean {  
+export function isActivityListReady(): boolean {
   const activityRows = findAllElements(SELECTORS.ACTIVITY.ROW);
   return activityRows.length > 0;
 }
@@ -30,13 +30,13 @@ export function isActivityListReady(): boolean {
  * 分为两个阶段：
  * 1. 等待页面基础加载完成（document.readyState === 'complete'）
  * 2. 等待活动列表加载完成（最多10秒）
- * 
+ *
  * @param timeout 页面基础加载超时时间（毫秒）
  * @returns Promise<boolean> 是否加载成功
  */
 export async function waitForPageLoad(timeout: number = CURRENT_DELAYS.PAGE_LOAD): Promise<boolean> {
   const startTime = Date.now();
-  
+
   // 阶段1: 等待页面基础加载完成
   while (Date.now() - startTime < timeout) {
     if (isPageLoaded()) {
@@ -54,7 +54,7 @@ export async function waitForPageLoad(timeout: number = CURRENT_DELAYS.PAGE_LOAD
   // 阶段2: 等待活动列表加载完成（最多10秒）
   const LIST_LOAD_TIMEOUT = 10000;
   const listStartTime = Date.now();
-  
+
   while (Date.now() - listStartTime < LIST_LOAD_TIMEOUT) {
     if (isActivityListReady()) {
       // 额外等待一段时间，确保DOM完全渲染并稳定
@@ -75,14 +75,14 @@ export async function waitForPageLoad(timeout: number = CURRENT_DELAYS.PAGE_LOAD
  */
 export function getCurrentPage(): number {
   const currentPageElement = findElement(SELECTORS.PAGINATION.PAGE_INDEX);
-  
+
   if (!currentPageElement) {
     console.warn('[PageManager] Cannot find current page indicator, assuming page 1');
     return 1;
   }
 
   const pageText = currentPageElement.textContent?.trim();
-  
+
   if (!pageText) {
     return 1;
   }
@@ -93,20 +93,20 @@ export function getCurrentPage(): number {
     const startItem = parseInt(rangeMatch[1], 10);
     const endItem = parseInt(rangeMatch[2], 10);
     const totalItems = parseInt(rangeMatch[3], 10);
-    
+
     console.log(`[PageManager] Detected range format: ${pageText} (start: ${startItem}, end: ${endItem}, total: ${totalItems})`);
-    
+
     // 根据起始位置计算页码
     // 例如：startItem = 1 → 第1页, startItem = 21 → 第2页, startItem = 41 → 第3页
     const pageNumber = Math.floor((startItem - 1) / SELECTORS.PAGINATION.ITEMS_PER_PAGE) + 1;
-    
+
     console.log(`[PageManager] Calculated page number: ${pageNumber} (assuming ${SELECTORS.PAGINATION.ITEMS_PER_PAGE} items per page)`);
     return pageNumber;
   }
 
   // 处理简单数字格式："1", "2", "3"
   const pageNumber = parseInt(pageText, 10);
-  
+
   if (isNaN(pageNumber)) {
     console.warn(`[PageManager] Cannot parse page number from: "${pageText}", assuming page 1`);
     return 1;
@@ -121,7 +121,7 @@ export function getCurrentPage(): number {
  */
 export function hasNextPage(): boolean {
   const nextButton = findElement<HTMLButtonElement>(SELECTORS.PAGINATION.NEXT_PAGE);
-  
+
   if (!nextButton) {
     console.log('[PageManager] No next page button found');
     return false;
@@ -153,7 +153,7 @@ export async function goToNextPage(): Promise<boolean> {
 
   // 点击下一页按钮
   const clicked = await clickElement(nextButton, CURRENT_DELAYS.PAGE_LOAD);
-  
+
   if (!clicked) {
     console.error('[PageManager] Failed to click next page button');
     return false;
@@ -189,10 +189,10 @@ export function isOnFirstPage(): boolean {
  * @returns Promise<boolean> 是否成功回到第一页
  */
 export async function goToFirstPage(): Promise<boolean> {
-  
+
   // 使用封装的点击排序按钮函数，不管是不是第一页，都点击一次排序
   const clicked = await clickSortButton();
-  
+
   if (!clicked) {
     return false;
   }
@@ -208,7 +208,7 @@ export async function goToFirstPage(): Promise<boolean> {
 export async function ensureFirstPage(maxRetries: number = 3): Promise<boolean> {
   for (let i = 0; i < maxRetries; i++) {
     const success = await goToFirstPage();
-    
+
     if (success) {
       return true;
     }
@@ -239,7 +239,7 @@ async function clickSortButton(): Promise<boolean> {
 
   // 点击排序按钮
   const clicked = await clickElement(sortButton, CURRENT_DELAYS.PAGE_LOAD);
-  
+
   if (!clicked) {
     console.error('[PageManager] Failed to click sort button');
     return false;
@@ -247,7 +247,7 @@ async function clickSortButton(): Promise<boolean> {
 
   // 等待页面重新加载
   await waitForPageLoad();
-  
+
   return true;
 }
 
@@ -258,7 +258,7 @@ async function clickSortButton(): Promise<boolean> {
 export function isTimeSortedDescending(): boolean {
   // 检查排序按钮的状态或排序指示器
   const sortButton = findElement(SELECTORS.SORT.SORT_BY_DATE);
-  
+
   if (!sortButton) {
     console.warn('[PageManager] Cannot find sort by date button');
     return false;
@@ -283,17 +283,17 @@ export async function sortByTimeDescending(): Promise<boolean> {
     console.log('[PageManager] Already sorted by time (descending)');
     return true;
   }
-  
+
   // 使用封装的点击排序按钮函数
   const clicked = await clickSortButton();
-  
+
   if (!clicked) {
     return false;
   }
 
   // 验证排序是否成功
   const success = isTimeSortedDescending();
-  
+
   if (success) {
     console.log('[PageManager] Successfully sorted by time (descending)');
   } else {
@@ -315,7 +315,7 @@ export async function sortByTimeDescending(): Promise<boolean> {
 export async function ensureTimeSortedList(maxRetries: number = 2): Promise<boolean> {
   for (let i = 0; i < maxRetries; i++) {
     const success = await sortByTimeDescending();
-    
+
     if (success) {
       return true;
     }
@@ -376,6 +376,7 @@ export function validatePageEnvironment(): { ready: boolean; errors: string[] } 
   }
 
   if (!isPageLoaded()) {
+    console.log('song Page not loaded')
     errors.push('Page not loaded');
   }
 
