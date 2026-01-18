@@ -99,7 +99,6 @@ export function isValidDistanceRange(
  * @returns boolean
  */
 export function isValidCondition(condition: ConditionConfig): boolean {
-  console.log('song start isValidCondition', condition);
   if (!condition || typeof condition !== 'object') return false;
   if (!condition.type) return false;
 
